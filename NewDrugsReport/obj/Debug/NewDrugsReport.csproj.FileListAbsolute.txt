@@ -1,0 +1,16 @@
+D:\prj\NewDrugsReport\bin\NewDrugsReport.dll.config
+D:\prj\NewDrugsReport\bin\NewDrugsReport.dll
+D:\prj\NewDrugsReport\bin\NewDrugsReport.pdb
+D:\prj\NewDrugsReport\bin\CityinfoCommon.dll
+D:\prj\NewDrugsReport\bin\JWT.dll
+D:\prj\NewDrugsReport\bin\Newtonsoft.Json.dll
+D:\prj\NewDrugsReport\bin\RestSharp.dll
+D:\prj\NewDrugsReport\bin\JWT.xml
+D:\prj\NewDrugsReport\bin\Newtonsoft.Json.xml
+D:\prj\NewDrugsReport\obj\Debug\NewDrugsReport.csproj.CoreCompileInputs.cache
+D:\prj\NewDrugsReport\obj\Debug\NewDrugsReport.csproj.CopyComplete
+D:\prj\NewDrugsReport\obj\Debug\NewDrugsReport.dll
+D:\prj\NewDrugsReport\obj\Debug\NewDrugsReport.pdb
+D:\prj\NewDrugsReport\bin\ICSharpCode.SharpZipLib.dll
+D:\prj\NewDrugsReport\bin\ICSharpCode.SharpZipLib.xml
+D:\prj\NewDrugsReport\obj\Debug\NewDrugsReport.csprojAssemblyReference.cache

@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="TbCommonDataSqlProvider">
+  <column id="tableColumn">
+    COMM_VALUE,COMM_VALUE2,COMM_CODE
+  </column>
+  <select id="selectTableCommonCounty">
+    <![CDATA[
+          select * from TB_COMMON_CODE where COMM_TYPE = 'COUNTY' #{whereString} order by convert(int,COMM_CODE)  --縣市
+        ]]>
+  </select>
+  <select id="selectTableCommonCity">
+    <![CDATA[
+          select * from TB_COMMON_CODE  where COMM_TYPE = 'CITY' #{whereString} order by COMM_CODE  --區         
+        ]]>
+  </select>
+  <select id="selectTableCommonRoad">
+    <![CDATA[
+          select * from TB_COMMON_CODE where COMM_TYPE = 'ROAD' #{whereString} order by COMM_CODE -- 路   
+        ]]>
+  </select>
+
+  <select id="selectTableCommon">
+    <![CDATA[
+          select ROW_NUMBER() OVER(ORDER BY           
+          COMM_CR_DATE) as ROW_ID,
+           * from TB_COMMON_CODE #{whereString} order by COMM_SORT
+        ]]>
+  </select>  
+</SqlMap>

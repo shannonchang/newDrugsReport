@@ -1,0 +1,158 @@
+﻿@using NewDrugs.Models
+@{
+    Layout = null;
+    LoginAuthEnable authModel = (LoginAuthEnable)ViewBag.Auth;
+}
+@if (ViewBag.isHome == "Y"){
+    if (authModel.MenuItem01 == 1){
+        <li>
+            @{
+
+                if (ViewBag.loginType == "1" || ViewBag.loginType == "2"){
+                    <a id="linkBtn" >
+                        <aside>
+                            <img src="@Url.Content("~/Scripts/images/nav1.png")" alt="" />
+                        </aside>
+                        <p>特定人員管理</p>
+                    </a>
+                }else{
+                    <a id="linkBtn" >
+                        <aside>
+                            <img src="@Url.Content("~/Scripts/images/nav1.png")" alt="" />
+                        </aside>
+                        <p>特定人員管理</p>
+                    </a>
+                }
+            }
+        </li>
+    }
+    if (authModel.MenuItem02 == 1){
+        <li>
+            <a id="linkBtn" >
+                <aside>
+                    <img src="@Url.Content("~/Scripts/images/nav2.png")" alt="" />
+                </aside>
+                <p>已成立春暉小組</p>
+            </a>
+        </li>
+    }
+    if (authModel.MenuItem03 == 1){
+        <li>
+            <a id="linkBtn" data-href="@Url.Action("nsch", "DrugsNotice")">
+                <aside>
+                    <img src="@Url.Content("~/Scripts/images/nav3.png")" alt="" />
+                </aside>
+                <p>未成立春暉小組</p>
+            </a>
+        </li>
+    }
+    if (ViewBag.loginType == "4"){
+        <li>
+            <a id="linkBtn" >
+                <aside>
+                    <img src="@Url.Content("~/Scripts/images/nav4.png")" alt="" />
+                </aside>
+                <p>重大案件</p>
+            </a>
+        </li>
+    }
+    if (authModel.MenuItem05 == 1){
+        <li>
+            <a id="linkBtn" data-href="@Url.Action("Index", "Report")">
+                <aside>
+                    <img src="@Url.Content("~/Scripts/images/nav6.png")" alt="" />
+                </aside>
+                <p>報表專區</p>
+            </a>
+        </li>
+    }
+    if (!object.ReferenceEquals(authModel.MenuItem06, null)){
+        <li>
+            <a id="linkBtn" >
+                <aside>
+                    <img src="@Url.Content("~/Scripts/images/nav5.png")" alt="" />
+                </aside>
+                <p>下載專區</p>
+            </a>
+        </li>
+    }
+    if (!object.ReferenceEquals(authModel.MenuItem07, null)){
+        if (ViewBag.loginType == "2"){
+            <li>
+                <a id="linkBtn" >
+                    <aside>
+                        <img src="@Url.Content("~/Scripts/images/nav7.png")" alt="" />
+                    </aside>
+                    <p>權限管理</p>
+                </a>
+            </li>
+        }else if (ViewBag.loginType == "3"){
+            <li>
+                <a id="linkBtn" >
+                    <aside>
+                        <img src="@Url.Content("~/Scripts/images/nav7.png")" alt="" />
+                    </aside>
+                    <p>權限管理</p>
+                </a>
+            </li>
+        }else if (ViewBag.loginType == "1"){
+            <li>
+                <a id="linkBtn" >
+                    <aside>
+                        <img src="@Url.Content("~/Scripts/images/nav7.png")" alt="" />
+                    </aside>
+                    <p>權限管理</p>
+                </a>
+            </li>
+        }else{
+            <li>
+                <a id="linkBtn">
+                    <aside>
+                        <img src="@Url.Content("~/Scripts/images/nav7.png")" alt="" />
+                    </aside>
+                    <p>權限管理</p>
+                </a>
+            </li>
+        }
+    }
+}else{
+    //特定人員
+    if (authModel.MenuItem01 == 1){
+        if (ViewBag.loginType == "1" || ViewBag.loginType == "2"){
+            <li id="li1"><a id="linkBtn" class="btn-link">特定人員</a></li>
+        }else{
+            <li id="li1"><a id="linkBtn" class="btn-link">特定人員</a></li>
+        }
+    }
+    //成立春暉小組
+    if (authModel.MenuItem02 == 1){
+        <li id="li2"><a id="linkBtn" class="btn-link">成立春暉小組</a></li>
+    }
+    //未成立春暉小組
+    if (authModel.MenuItem03 == 1){
+        <li id="li3"><a id="linkBtn" class="btn-link">未成立春暉小組</a></li>
+    }
+    if (ViewBag.loginType == "4"){
+        <li id="li4"><a id="linkBtn" class="btn-link">重大案件管制區</a></li>
+    }
+    //報表管理
+    if (authModel.MenuItem05 == 1){
+        <li id="li5"><a id="linkBtn" data-href="@Url.Action("Index", "Report")" class="btn-link">報表管理</a></li>
+    }
+    //下載專區
+    if (!object.ReferenceEquals(authModel.MenuItem06, null)){
+        <li id="li6"><a id="linkBtn" class="btn-link">下載專區</a></li>
+    }
+    //權限管理
+    if (!object.ReferenceEquals(authModel.MenuItem07, null)){
+        if (ViewBag.loginType == "2"){
+            <li id="li7"><a id="linkBtn" class="btn-link">權限管理</a></li>
+        }else if (ViewBag.loginType == "3"){
+            <li id="li7"><a id="linkBtn" class="btn-link">權限管理</a></li>
+        }else if (ViewBag.loginType == "1"){
+            <li id="li7"><a id="linkBtn"  class="btn-link">權限管理</a></li>
+        }else{
+            <li id="li7"><a id="linkBtn"  class="btn-link">權限管理</a></li>
+        }
+    }
+}

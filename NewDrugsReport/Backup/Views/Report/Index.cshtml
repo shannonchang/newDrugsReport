@@ -1,0 +1,505 @@
+﻿@using NewDrugs.Models;
+<style>
+    .report-condition > dl{margin-right: 40px; width: 50%;}
+    .report-condition > dl > dd{text-align: left;}
+</style>
+<script>
+var tmpStor={};
+$(function(){
+    $(".specificBtn button").click(function(){
+        $(".specificBtn button").removeClass("specificBtn01");
+        $(".specificBtn button").addClass("specificBtn02");
+        $(this).removeClass("specificBtn02").addClass("specificBtn01");
+        $(".report-box").hide();
+        $("#"+$(this).data("aims")).show();
+    });
+    $(".datepicker").datepicker({
+        language:"zh-TW",
+        autoclose: true,
+        todayBtn: "linked"
+    }).on("changeDate",function(){
+        $("[name="+$(this).prop("id")+"]").val($.enDate($(this).val()));
+    });
+    // IE 須另寫event
+    $("[data-datepicker]").click(function(){
+        $("#"+$(this).data("datepicker")).datepicker("show");
+    });
+    $(".select a").click(function(){
+        var top = $(this).offset().top - window.scrollY, left = $(this).offset().left + ($(this).width()*2);
+        console.log($(this).offset().top);
+        var aims = $(this).data("aims");
+        doAjaxLoadPage("@Url.Action("popCounty","PopupWindow")", {"mbrType":$(this).data("mbrtype")}, function(result){
+            var dialog = bootbox.dialog({
+                message: result,
+                backdrop : false
+            });
+            dialog.init(function(){
+                if((top+$(dialog).find(".modal-dialog").height()) > window.innerHeight){
+                    top = (top - $(dialog).find(".modal-dialog").height());
+                }
+                $(dialog).find(".modal-dialog").css({"width":"400px", "margin-top":top+"px", "margin-left":left+"px"});
+                if($("[name="+aims+"]").val()){
+                    $.each($("[name="+aims+"]").val().split(","), function(i,val){
+                        $(dialog).find("[type=checkbox][value="+val+"]").prop("checked","checked");
+                    });
+                }
+
+                $(dialog).find(".checkBtn").click(function(){
+                    var countyName = [];
+                    var countyId = [];
+                    $(dialog).find("[type=checkbox]:checked").each(function(i, tag){
+                        countyName.push($("[for="+$(tag).prop("id")+"]").text());
+                        countyId.push($(tag).val());
+                    });
+                    $("#"+aims).val(countyName.join(","));
+                    $("[name="+aims+"]").val(countyId.join(","));
+                    dialog.modal("hide");
+                });
+            });
+        });
+    });
+
+    genGtidTable({
+        "page":1,
+        "pageSize":10,
+        "tbDrugsNoticeUtils":jsonObject(getAllTagName("input:text, input:radio:checked, input:hidden, select, textarea"))
+    });
+
+    $("#cleanBtn").click(function(){
+        $("ul").find("[type=text], [type=hidden], select").val("");
+        $("ul").find("[type=radio]").prop({"checked":false});
+    });
+    $("#qryBtn").click(function(){
+        genGtidTable({
+            "page":1,
+            "pageSize":10,
+            "tbDrugsNoticeUtils":jsonObject(getAllTagName("input:text, input:radio:checked, input:hidden, select, textarea"))
+        });
+    });
+    $("#expBtn").click(function(){
+        $("#actionForm").empty();
+        var $form = $("<form>").attr({"action":"@Url.Action("expDynamicReport","Report")","method":"post"});
+        $form.append($("<input>").attr({"id":"token","name":"token", "type":"hidden"}).val(storage.getItem('drugsToken')));
+        $.each(jsonObject(getAllTagName("input:text, input:radio:checked, input:hidden, select, textarea")), function(key, value){
+            $form.append($("<input>").attr({"type":"hidden", "name":key}).val(value));
+        });
+        $("[name=showColumn]:checked").each(function(i, tag){
+            $form.append($("<input>").attr({"type":"hidden", "name":"needColumn"}).val(JSON.stringify({"column":$(tag).val(), "columnValue":$(tag).data("title")})));
+        });
+        $("#actionForm").append($form);
+        $form.submit();
+    });
+    $("[name=showColumn]").click(function(){
+        if($(this).prop("checked")){
+            $("[data-name="+$(this).val()+"]").data("hidden", "N");
+            $("[data-name="+$(this).val()+"]").show();
+            if(!$.isEmptyObject(tmpStor)){
+                $("#reportGrid").tableClean();
+                $("#reportGrid").tableGrid(tmpStor);
+            }
+        }else{
+            $("[data-name="+$(this).val()+"]").data("hidden", "Y");
+            if(!$.isEmptyObject(tmpStor)){
+                $("#reportGrid").tableClean();
+                $("#reportGrid").tableGrid(tmpStor);
+            }
+        }
+    });
+
+    $("#reportType").change(function(){
+        $("[id ^= DIV_]").hide();
+        var showDiv = $(this).children(":selected").data("aims");
+        if(showDiv){
+            $("#"+showDiv).show();
+        }
+    });
+    $("#downloadReport").click(function(){
+        var $showDiv = $("#"+$("#reportType :selected").data("aims"));
+        linkSubmit("@Url.Action("expOtherReport","Report")", {
+            "reportType":$("#reportType").val(),
+            "beginYear":$showDiv.find("#beginYear").val(),
+            "beginMonth":$showDiv.find("#beginMonth").val(),
+            "endYear":$showDiv.find("#endYear").val(),
+            "endMonth":$showDiv.find("#endMonth").val(),
+            "schoolSystemSno":$showDiv.find("#schoolSystemSno").val()
+        });
+    });
+});
+function genGtidTable(param){
+    doAjaxProcess("@Url.Action("dynamicReportByGrid","Report")",JSON.stringify(param),function(result){
+        if(result.status == "success"){
+            tmpStor = result.data;
+            $("#reportGrid").tableGrid(tmpStor);
+            $("#pageSize").change(function(){
+                genGtidTable({
+                    "page":1,
+                    "pageSize":$(this).val(),
+                    "tbDrugsNoticeUtils":jsonObject(getAllTagName("input:text, input:radio:checked, input:hidden, select, textarea"))
+                });
+            });
+            $("#toPage").change(function(){
+                genGtidTable({
+                    "page":$(this).val(),
+                    "pageSize":$("#pageSize").val(),
+                    "tbDrugsNoticeUtils":jsonObject(getAllTagName("input:text, input:radio:checked, input:hidden, select, textarea"))
+                });
+            });
+        }else{
+            $("#reportGrid").tableClean();
+            bootbox.alert(result.msg);
+        }
+    });
+}
+
+</script>
+<div class="search-box">
+    <!--搜尋條件列表--->
+    <div class="specificBtn">
+        <button class="specificBtn01" type="button" data-aims="dynaminReport">動態報表</button>
+        @if(ViewBag.loginType == "3" || ViewBag.loginType == "4") {
+            <button class="specificBtn02" type="button" data-aims="otherReport">統計報表</button>
+        }
+    </div>
+    <div class="search-box report-box searcdrop" id="dynaminReport">
+        <h3>
+            動態報表<a class="search-btn searchclose2"><span class="searchoff">查詢功能</span><span class="searchon">關閉查詢</span></a>
+        </h3>
+        <ul class="inlineBlock">
+            <li style="width:20%;">
+                <dl style="width:100%;">
+                    <dt>姓 名</dt>
+                    <dd>
+                        <input type="text" id="stuName" name="stuName" style="width:100%;"/>
+                    </dd>
+                </dl>
+                <dl style="width:100%;">
+                    <dt>學 校</dt>
+                    <dd>
+                        <input type="text" id="school" name="school" style="width:100%;"/>
+                    </dd>
+                </dl>
+                <dl style="width:100%;">
+                    <dt>縣 市</dt>
+                    <dd>
+                        <input type="text" id="countyId" style="width:100%;" readonly="readonly"/>
+                        <input type="hidden" name="countyId"/>
+                    </dd>
+                </dl>
+                <dl style="width:100%;">
+                    <dd style="padding-left: 20%;">
+                        <span class="select"><a class="btn-link" data-aims="countyId">選擇</a> 備註：縣市可複選</span>
+                    </dd>
+                </dl>
+            </li>
+            <li style="width:20%;">
+                <dl>
+                    <dt>性 別</dt>
+                    <dd>
+                        <p>
+                            <input type="radio" id="sex_M" name="sex" value="M"/>
+                            <label for="sex_M">男</label>
+                            <input type="radio" id="sex_F" name="sex" value="F"/>
+                            <label for="sex_F">女</label>
+                        </p>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>學 制</dt>
+                    <dd>
+                        <select id="schoolSystemSno" name="schoolSystemSno">
+                            <option value="">請選擇</option>
+                            @foreach(TbCommonData comm in ViewBag.schoolSystemList){
+                                <option value="@comm.COMM_CODE">@comm.COMM_VALUE</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>輔 導 狀 態</dt>
+                    <dd>
+                        <select id="counselingStatus" name="counselingStatus">
+                            <option value="">請選擇</option>
+                            @foreach(TbCommonData comm in ViewBag.counselingStatusList){
+                                <option value="@comm.COMM_CODE">@comm.COMM_VALUE</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>是否遭警查獲</dt>
+                    <dd>
+                        <p>
+                            <input type="radio" id="isPoliceSeized_Y" name="isPoliceSeized" value="Y"/>
+                            <label for="isPoliceSeized_Y">是</label>
+                            <input type="radio" id="isPoliceSeized_N" name="isPoliceSeized" value="N"/>
+                            <label for="isPoliceSeized_N">否</label>
+                        </p>
+                    </dd>
+                </dl>
+            </li>
+            <li style="width:20%;">
+                <dl>
+                    <dt>施用原因</dt>
+                    <dd>
+                        <select id="useReason" name="useReason">
+                            <option value="">請選擇</option>
+                            @foreach(TbCommonData comm in ViewBag.usrsList){
+                                <option value="@comm.COMM_CODE">@comm.COMM_VALUE</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>濫用區分</dt>
+                    <dd>
+                        <select id="drugsEventType" name="drugsEventType">
+                            <option value="">請選擇</option>
+                            @foreach(TbCommonData comm in ViewBag.dgetList){
+                                <option value="@comm.COMM_CODE">@comm.COMM_VALUE</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>藥物來源</dt>
+                    <dd>
+                        <select id="drugsOrigin" name="drugsOrigin">
+                            <option value="">請選擇</option>
+                            @foreach(TbCommonData comm in ViewBag.dgonList){
+                                <option value="@comm.COMM_CODE">@comm.COMM_VALUE</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>是否再犯</dt>
+                    <dd>
+                        <p>
+                            <label for="isAgain_Y"><input type="radio" id="isAgain_Y" name="isAgain" value="Y">是</label> 
+                            <label for="isAgain_N"><input type="radio" id="isAgain_N" name="isAgain" value="N">否</label>
+                        </p>
+                    </dd>
+                </dl>
+            </li>
+            <li class="li-datetime" style="width:30%;">
+                <dl>
+                    <dt>出生年月</dt>
+                    <dd>
+                        <input type="text" id="birthDayStart" class="datepicker"/>
+                        <input type="hidden" name="birthDayStart"/>
+                        <label for="birthDayStart">
+                            <img src="@Url.Content("~/Scripts/images/date.png")" alt="" data-datepicker="birthDayStart"/>
+                        </label> ~ 
+                        <input type="text" id="birthDayEnd" class="datepicker"/>
+                        <input type="hidden" name="birthDayEnd"/>
+                        <label for="birthDayEnd">
+                            <img src="@Url.Content("~/Scripts/images/date.png")" alt="" data-datepicker="birthDayEnd"/>
+                        </label>
+                    </dd>
+                </dl>
+
+                <dl>
+                    <dt>輔導期間</dt>
+                    <dd>
+                        <input type="text" id="counselingBeginDate" class="datepicker"/>
+                        <input type="hidden" name="counselingBeginDate"/>
+                        <label for="counselingBeginDate">
+                            <img src="@Url.Content("~/Scripts/images/date.png")" alt="" data-datepicker="counselingBeginDate"/>
+                        </label> ~ 
+                        <input type="text" id="counselingEndDate" class="datepicker"/>
+                        <input type="hidden" name="counselingEndDate"/>
+                        <label for="counselingEndDate">
+                            <img src="@Url.Content("~/Scripts/images/date.png")" alt="" data-datepicker="counselingEndDate"/>
+                        </label>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>春暉小組</dt>
+                    <dd>
+                        <select id="isSetupCh" name="isSetupCh">
+                            <option value="">請選擇</option>
+                            <option value="Y">已成立</option>
+                            <option value="N">未成立</option>
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+            <li class="databtn_li">
+                <button id="cleanBtn" class="btn qry-btn" type="button">
+                    重 填
+                </button>
+                <button id="qryBtn" class="btn qry-btn" type="button">
+                    查 詢
+                </button>
+            </li>
+        </ul>
+        <div class="selectbox">
+            <h3>顯示欄位</h3>
+            <div class="inlineBlock" style="background-color: #FFF; border: #e9e8e8 1px solid; padding: 20px 20px;">
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="idn" data-title="通報序號">通報序號 <br> <input type="checkbox" name="showColumn" checked="checked" value="drugsOriginStr" data-title="藥物來源">藥物來源</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="countyStr" data-title="縣市">縣市 <br> <input type="checkbox" name="showColumn" checked="checked" value="drugsEventTypeStr" data-title="濫用區分">濫用區分</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="schoolSystemStr" data-title="學制">學制 <br> <input type="checkbox" name="showColumn" checked="checked" value="useReasonStr" data-title="濫用原因">濫用原因</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="school" data-title="學校">學校 <br> <input type="checkbox" name="showColumn" checked="checked" value="counselingPeriod" data-title="輔導期間">輔導期間</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="stuName" data-title="姓名">姓名 <br> <input type="checkbox" name="showColumn" checked="checked" value="isAgainStr" data-title="是否再犯">是否再犯</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="sexStr" data-title="性別">性別 <br> <input type="checkbox" name="showColumn" checked="checked" value="counselingStatusStr" data-title="輔導狀態">輔導狀態</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="eduInfo" data-title="班級">班級 <br> <input type="checkbox" name="showColumn" checked="checked" value="flowStatusStr" data-title="審核狀態">審核狀態</li>
+                <li style="width:auto;"><input type="checkbox" name="showColumn" checked="checked" value="stuBirth" data-title="出生年月日">出生年月日<br> <input type="checkbox" name="showColumn" checked="checked" value="isPoliceSeizedStr" data-title="遭警查獲">遭警查獲</li>
+                <li class="databtn_li" style="width: 25%;">
+                    <button id="expBtn" class="btn qry-btn" type="button">
+                        匯出EXCEL
+                    </button>
+                </li>
+            </div>
+        </div>
+        <div class="table-date table-date4">
+            <table id="reportGrid" width="100%" border="0">
+                <thead>
+                    <tr class="tr-color">
+                        <th data-name="idn" data-hidden="N">通報序號</th>
+                        <th data-name="countyStr" data-hidden="N">縣市</th>
+                        <th data-name="school" data-hidden="N">學校</th>
+                        <th data-name="schoolSystemStr" data-hidden="N">學制</th>
+                        <th data-name="stuName" data-hidden="N">姓名</th>
+                        <th data-name="sexStr" data-hidden="N">性別</th>
+                        <th data-name="stuBirth" data-hidden="N">出生日期</th>
+                        <th data-name="eduInfo" data-hidden="N">班級</th>
+                        <th data-name="isPoliceSeizedStr" data-hidden="N">遭警查獲</th>
+                        <th data-name="drugsOriginStr" data-hidden="N">藥物來源</th>
+                        <th data-name="drugsEventTypeStr" data-hidden="N">濫用區分</th>
+                        <th data-name="useReasonStr" data-hidden="N">濫用原因</th>
+                        <th data-name="counselingPeriod" data-hidden="N">輔導期間</th>
+                        <th data-name="isAgainStr" data-hidden="N">是否再犯</th>
+                        <th data-name="counselingStatusStr" data-hidden="N">輔導狀態</th>
+                        <th data-name="flowStatusStr" data-hidden="N">審核狀態</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <p id="reportGridPageController"></p>
+        </div>
+    </div>
+    <div id="otherReport" class="search-box report-box" align="center" style="display:none;">
+        <h3 align="left">統計報表</h3>
+        <ul class="inlineBlock">
+            <li class="databtn_li" style="text-align: inherit;">
+                <dl>
+                    <dt>統計表格</dt>
+                    <dd>
+                        <select id="reportType" name="reportType">
+                            <option value="">請選擇</option>
+                            @foreach(TbCommonData comm in ViewBag.rptyList){
+                                <option value="@comm.COMM_CODE" data-aims="@comm.COMM_VALUE2">@comm.COMM_VALUE</option>
+                            }
+                        </select>
+                    </dd>
+                    <button type="button" id="downloadReport">查 詢</button>
+                </dl>
+            </li>
+            <li id="DIV_1" class="databtn_li report-condition" style="text-align: inherit; display:none;">
+                <dl>
+                    <dt>查詢年度</dt>
+                    <dd>
+                        <select id="beginYear" name="beginYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                        <select id="beginMonth" name="beginMonth">
+                            @for(int m=1; m <= 12; m++) {
+                                <option value="@String.Format("{0:00}",Convert.ToInt32(m))" @if (m == DateTime.Now.Month) {<text>selected="selected"</text>}>@(String.Format("{0:00}",Convert.ToInt32(m)))月</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+            <li id="DIV_2" class="databtn_li report-condition" style="text-align: inherit; display: none;">
+                <dl>
+                    <dt>查詢年度</dt>
+                    <dd>
+                        <select id="beginYear" name="beginYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                        <span> ~ </span>
+                        <select id="endYear" name="endYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+            <li id="DIV_3" class="databtn_li report-condition" style="text-align: inherit; display: none;">
+                <dl>
+                    <dt>查詢年度</dt>
+                    <dd>
+                        <select id="beginYear" name="beginYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                        <span> ~ </span>
+                        <select id="endYear" name="endYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+            <li id="DIV_B" class="databtn_li report-condition" style="text-align: inherit; display: none;">
+                <dl>
+                    <dt>查詢年度</dt>
+                    <dd>
+                        <select id="beginYear" name="beginYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                        <select id="beginMonth" name="beginMonth">
+                            @for(int m=1; m <= 12; m++) {
+                                <option value="@String.Format("{0:00}",Convert.ToInt32(m))" @if (m == DateTime.Now.Month) {<text>selected="selected"</text>}>@(String.Format("{0:00}",Convert.ToInt32(m)))月</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+            <li id="DIV_C" class="databtn_li report-condition" style="text-align: inherit; display: none;">
+                <dl>
+                    <dt>查詢年度</dt>
+                    <dd>
+                        <select id="beginYear" name="beginYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                        <select id="beginMonth" name="beginMonth">
+                            @for(int m=1; m <= 12; m++) {
+                                <option value="@String.Format("{0:00}",Convert.ToInt32(m))" @if (m == DateTime.Now.Month) {<text>selected="selected"</text>}>@(String.Format("{0:00}",Convert.ToInt32(m)))月</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+            <li id="DIV_D" class="databtn_li report-condition" style="text-align: inherit; display: none;">
+                <dl>
+                    <dt>查詢年度</dt>
+                    <dd>
+                        <select id="beginYear" name="beginYear">
+                            @for(int y=2018; y <= DateTime.Now.Year; y++) {
+                                <option value="@y" @if (y == DateTime.Now.Year) {<text>selected="selected"</text>}>@(y-1911)年</option>
+                            }
+                        </select>
+                        <select id="beginMonth" name="beginMonth">
+                            @for(int m=1; m <= 12; m++) {
+                                <option value="@String.Format("{0:00}",Convert.ToInt32(m))" @if (m == DateTime.Now.Month) {<text>selected="selected"</text>}>@(String.Format("{0:00}",Convert.ToInt32(m)))月</option>
+                            }
+                        </select>
+                    </dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+</div>

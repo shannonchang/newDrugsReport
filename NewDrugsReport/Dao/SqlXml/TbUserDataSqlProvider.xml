@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="TbUserDataSqlProvider">
+  <column id="tableColumn">
+    USER_ID , ACCOUNT , PASSWORD , SCHOOL , SCHOOL_SYSTEM_SNO ,
+    COUNTY_ID, CITY , ROAD  , SCHOOL_ADDRESS,
+    SCHOOL_PRESIDENT  , NAME  , JOB  , PHONE ,
+    EMAIL  ,  STATUS
+  </column>
+  <select id="selectTableUser">
+    <![CDATA[
+            select ROW_NUMBER() OVER(ORDER BY USER_ID) AS rowId, #{tableColumn},
+            COUNTY_ID_CHT = (ISNULL((select top 1 COMM_VALUE from TB_COMMON_CODE where COMM_TYPE = 'COUNTY' and COMM_CODE = VW_LOGIN_INFO.COUNTY_ID),'')) 
+            from VW_LOGIN_INFO  
+            #{whereString}                  
+        ]]>
+  </select>
+  <select id="selectUserEmail">
+    <![CDATA[
+            select EMAIL from VW_USER_DATA #{whereString}
+    ]]>
+  </select>
+  <select id="chkUserIdExists">
+    <![CDATA[
+            select count(USER_ID) from TB_USER_DATA where USER_ID = @USER_ID
+    ]]>
+  </select>
+  <select id="selectUserTitle">
+    <![CDATA[
+            select TITLE from TB_USER_ACCOUNT where ACCOUNT = @ACCOUNT
+    ]]>
+  </select>
+  <select id="selectUserAccountName">
+    <![CDATA[
+            select top 1 ACCOUNT_NAME from TB_USER_ACCOUNT where ACCOUNT = @ACCOUNT
+    ]]>
+  </select>
+  <update id="updateTableUser">
+    <![CDATA[            
+            update TB_USER_DATA
+             set SCHOOL = @SCHOOL,SCHOOL_SYSTEM_SNO = @SCHOOL_SYSTEM_SNO, COUNTY_ID = @COUNTY_ID , CITY = @CITY , ROAD = @ROAD,
+             SCHOOL_ADDRESS = @SCHOOL_ADDRESS, SCHOOL_TYPE = (CASE WHEN @SCHOOL_SYSTEM_SNO in (1,2,3,4,5,6,7,8,9,11) THEN '2' ELSE '3' END),
+             SCHOOL_PRESIDENT = @SCHOOL_PRESIDENT 
+            where 
+              USER_ID = @USER_ID
+              
+            update TB_USER_ACCOUNT
+             set  PASSWORD = @PASSWORD,
+             ACCOUNT_NAME = @ACCOUNT_NAME,
+             JOB = @JOB,  PHONE = @PHONE,
+             EMAIL = @EMAIL , STATUS  = @STATUS
+             where ACCOUNT = @ACCOUNT             
+        ]]>
+  </update>
+    <update id="updUserDataOnly" desc="只更新TB_USER_DATA">
+        <![CDATA[
+            update TB_USER_DATA
+               set COUNTY_ID = @COUNTY_ID,
+                   CITY = @CITY,
+                   ROAD = @ROAD,
+                   SCHOOL = @SCHOOL,
+                   CH_OWNER = @CH_OWNER,
+                   TEL = @TEL,
+                   SCHOOL_PRESIDENT = @SCHOOL_PRESIDENT,
+                   SCHOOL_ADDRESS = @SCHOOL_ADDRESS,
+                   SCHOOL_SYSTEM_SNO = @SCHOOL_SYSTEM_SNO,
+                   SCHOOL_CODE = @SCHOOL_CODE,
+                   SCHOOL_TYPE = @SCHOOL_TYPE,
+                   UP_IP = @UP_IP,
+                   UP_DATE = getDate(),
+                   UP_USER = @UP_USER,
+                   IS_HAVE_SPCF = @IS_HAVE_SPCF
+             where USER_ID = @USER_ID
+        ]]>
+    </update>
+  <insert id="insertTableUser">
+    <![CDATA[
+          insert into TB_USER_DATA (
+            USER_ID,
+            CH_OWNER,
+            SCHOOL,
+            SCHOOL_SYSTEM_SNO,
+            COUNTY_ID,
+            CITY,
+            ROAD,
+            SCHOOL_ADDRESS,
+            SCHOOL_PRESIDENT,
+            SCHOOL_TYPE
+
+          ) values (
+            @USER_ID,
+            @ACCOUNT,   --歸屬之承辦人
+            @SCHOOL,
+            @SCHOOL_SYSTEM_SNO,
+            @COUNTY_ID,
+            @CITY,
+            @ROAD,
+            @SCHOOL_ADDRESS,
+            @SCHOOL_PRESIDENT,
+            (CASE WHEN @SCHOOL_SYSTEM_SNO in (1,2,3,4,5,6,7,8,9,11) THEN '2' ELSE '3' END)
+          )        
+          declare @TITLE varchar(5) = ''
+          if(@SCHOOL_SYSTEM_SNO <> 10)  --若為學校單位
+          begin 
+            set @TITLE = '9'   --春暉承辦人
+          end
+          insert into TB_USER_ACCOUNT (
+            ACCOUNT,
+            USER_ID,
+            PASSWORD,
+            ACCOUNT_NAME,
+            TITLE,
+            JOB,
+            EMAIL,
+            STATUS,
+            CR_DATE,       
+            CR_USER,
+            UP_DATE,
+            UP_USER,
+            LOGIN_ERROR,
+            PHONE
+          )values (
+            @ACCOUNT,
+            @USER_ID,
+            @PASSWORD,
+            @ACCOUNT_NAME,
+            @TITLE,
+            @JOB,
+            @EMAIL,
+            @STATUS,
+            getdate(),
+            @ACCOUNT,
+            getdate(),
+            @ACCOUNT,
+            0,
+            @PHONE
+          )
+        ]]>
+  </insert>
+
+    <select id="qryParentUser">
+        <![CDATA[
+            with USER_RELATIVE as (
+                select USER_ID, RELATIVE_USER_ID
+                  from TB_USER_AUTH_RELATIVE
+                 where RELATIVE_USER_ID = @USER_ID
+                union all
+                select uar.USER_ID, uar.RELATIVE_USER_ID
+                  from TB_USER_AUTH_RELATIVE uar
+                  join USER_RELATIVE ur on uar.RELATIVE_USER_ID = ur.USER_ID
+            )
+            select  USER_ID , PASSWORD , SCHOOL , SCHOOL_SYSTEM_SNO ,
+                COUNTY_ID, CITY , ROAD  , SCHOOL_ADDRESS,
+                SCHOOL_PRESIDENT  , NAME  , JOB  , PHONE ,
+                EMAIL  ,  STATUS , CH_OWNER, '9' as TITLE
+              from VW_USER_DATA
+             where USER_ID in (select ur.USER_ID from USER_RELATIVE ur)
+                or SCHOOL_TYPE = '4'
+        ]]>
+    </select>
+    <select id="qryIsHaveSpcf">
+        <![CDATA[
+            select IS_HAVE_SPCF from TB_USER_DATA where USER_ID = @userId;
+        ]]>
+    </select>
+    <update id="updIsHaveSpcf" desc="依每學期2月/8月，詢問該學當學期是否有特定人員，於每學期2月/8月重置">
+        <![CDATA[
+            update TB_USER_DATA 
+               set IS_HAVE_SPCF = @isHaveSpcf
+             where USER_ID = @userId;
+        ]]>
+    </update>
+</SqlMap>

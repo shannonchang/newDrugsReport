@@ -1,0 +1,122 @@
+﻿@import url(http://fonts.googleapis.com/earlyaccess/notosanstc.css);
+/* CSS Document */
+html{height:100%;}
+body{height:100%;font-size:16px;line-height:1.8;color:#000;font-family:Arial,'微軟正黑體';}
+.container{ max-width:1740px; width:100%; margin:auto; padding:15px}
+
+dl{ display:table} 
+dt{ display:table-cell}
+dd{ display:table-cell}
+
+select {border: solid 1px #d4d3d3;appearance: none;-moz-appearance: none;-webkit-appearance: none;}
+a{ font-size: 16px}
+a:hover{transition: all 0.7s}
+/***************header*************/
+header{width:100%;text-align:left;/*z-index:9999;*/ position: relative}
+header h1{display:inline-block;margin-left:50px;vertical-align:middle;}
+
+.sign_in-btn{position: absolute; right:52px; top:2px; font-size: 16px;line-height: 2em; color:#676868}
+.sign_in-btn a{background-color: #f66338;;padding:8px 50px ; color:#fff;margin-left: 10px}
+.sign_in-btn a:hover{background-color: #f00}
+
+.sign_in-btn a span,.sign_in-btn.active a b,.sign_in-btn>span,.sign_in-btn.active>b{display: none}
+.sign_in-btn.active a span,.sign_in-btn a b,.sign_in-btn.active>span,.sign_in-btn>b{display: initial}
+
+/*wrapper*/
+
+.wrapperbg{ background:url(../images/bg.jpg) top center no-repeat;min-width:1024px; max-height:1121px;transition:all .7s}
+.wrapperbg2{ background:url(../images/bg2.jpg) top center no-repeat;}
+.wrapperbg3{background:url(../images/indexbg.jpg) top center no-repeat;}
+
+/*模糊*/
+.wrapperbg.blur{-webkit-filter: blur(50px); 
+	/* Safari */
+	filter: blur(8px);}
+
+
+/***************分頁**************/
+/*預設使用bootstrap的樣式 (Ting I 修正)*/
+/*
+.pagination>li{display:inline-block;margin-right:3px;}
+.pagination > li:first-child > a,.pagination > li:last-child > a{border-radius:0;}
+.pagination > li { margin:0 12px}
+.pagination > li > a{color:black;line-height:2em;padding:0px 10px;border:initial 1px; background:none;text-align:center;font-size:15px;display:block;}
+.pagination > li.active > a,
+.pagination > li > a:hover{color:#dabe98;background:#293034}
+.pagination > li:first-child a,.pagination > li:last-child a{color:#000;background:none ; border:none }
+*/
+
+/***************LightBox**************/
+.lightbox{position:fixed;left:0;top:0;width:100%;height:100%;z-index:99;text-align:center;}
+.lightbox>article{position: relative;vertical-align: middle;display: inline-block; max-width: 460px;text-align: left;height: auto;z-index: 99;width: 90%;background: #024257;color: #000;margin: 10px auto;padding:30px 70px;max-height: 90%;overflow: auto; }
+   
+.lightbox article .btnColose{position:absolute;right:10px;top:5px;}
+
+.lightbox:before{content:"";height:100%;vertical-align:middle;display:inline-block;}
+.lightbox:after{position:absolute;left:0;top:0;content:"";height:100%;width:100%;background:rgba(0,0,0,.7);z-index:0;}
+
+.lightbox .sign_in p{color: #96a8c9}
+.lightbox .sign_in p b{margin-right: 10px}
+.lightbox .sign_in p input[type=text], .lightbox .sign_in p input[type=password] {
+    width: 89%;
+    color: #96a8c9;
+    background: none;
+    border-bottom: #000 1px solid;
+    box-shadow: 2px 17px 24px -18px #2b6072
+}
+.lightbox a{ color: #e1fcf8;font-size: 15px}
+.lightbox .sign_btn{ width: 100%; display: block; text-align: center; font-size: 23px; color: #000; letter-spacing: 10px; background-color: #b3d82f;margin:30px auto 10px;}
+.lightbox .sign_btn:hover{color: #fff; background-color: #f66338;}
+.lightbox .sign_in p span{color: #5cafde}
+
+/*Nav*/
+#Nav{margin-top:-37px;display:inline-block;vertical-align:top;text-align: center; width:100%}
+#Nav ul{max-width: 900px;width: 100%;margin:auto}	
+
+.Formmenu .list{ width: 100%;padding-top: 200px;}  /*Ting I 修正 margin-top*/
+.Formmenu .list>li{width:14.28%;background-color:#4e4643;text-align: center}
+.Formmenu .list>li:hover,.Formmenu .list>li.active{ background-color: #050505;transition: all 0.7s;}
+.Formmenu .list>li a{font-size: 19px; color: #fff;line-height: 2.5em;}
+.Formmenu .list>li a:after{ content: ""; background:url(../images/arrow.png) center bottom no-repeat; height: 15px;width: 19px; display: inline-block;}
+.Formmenu .list>li a:hover:after,.Formmenu .list>li.active a:after{background:url(../images/arrow1.png) center bottom no-repeat;transition: all 1.5s;}
+
+/***************footer*************/
+
+footer{text-align:center;padding:10px 0 }
+footer p{color:#000;font-size:14px;line-height:1em;}
+footer p>span{padding-left:15px}
+
+/*select*/
+.select{display: block;margin-top: 10px}
+.select a{background-color:#ff9500;line-height: 2em; color:#fff;padding:5px 10px ;font-size: 16px;letter-spacing: 2px;text-align: center;border:#d4d3d3 1px solid}
+.select a:hover{background-color: #f00}
+
+.search-box .selectArea{padding:50px 20px 20px;background:#fff;position:absolute;z-index:999;width:390px; border: #e9e8e8 1px solid;box-shadow: 1px 3px 3px 0px rgba(0,0,0,0.05);left: 80px;top:180px; display: none}
+.search-box .selectArea p input[type=checkbox]{margin:0 3px 0 8px}
+.btnColose{position:absolute;background:#f66338;padding:5px 7px;right:0;top:1px}
+
+.search-box .table-date5 .selectArea2{padding:10px;background:#fff;position:absolute;z-index:999;width:700px; border: #e9e8e8 1px solid;box-shadow: 1px 3px 3px 0px rgba(0,0,0,0.05);left: 380px;top:-150px; display: none}
+
+.search-box .table-date5 .selectArea2>h3{font-weight: bold;padding: 8px 0 8px 20px;border: #e9e8e8 2px solid;color:#4c391b;font-size: 17px;margin: 10px 0;background-color: #fff}
+.search-box .table-date5 .selectArea2>h3 span{color:#78A74B;}
+.search-box .table-date5 .selectArea2 p input[type=checkbox]{margin:0 3px 0 8px}
+
+/*mobileBtn
+.mobileBtnOpen{right:10px;top:10px;position:fixed;width:40px;height:40px;font-size:25px;color:#fff;text-align:center;line-height:40px;z-index:90;}
+.mobileBtnClose{right:10px;top:10px;position:absolute;font-size:30px;color:#fff;}*/   
+
+
+/*Search
+
+.search{position:relative;z-index:999;margin-top:-50px;}
+.search .container{padding:20px 100px;background:#353944;color:#fff;}
+.search .container h1{font-weight:bold;margin:15px 0;text-transform:uppercase;}
+.search .container dl{width:100%;}
+.search .container dl dd{padding-right:2%;width:28%;}
+
+.search .container dl button{border:3px solid #9aabb8;background:none;color:#fff;width:100%;text-transform:uppercase;line-height:3}*/
+
+
+
+
+

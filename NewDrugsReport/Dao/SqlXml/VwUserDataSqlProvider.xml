@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="ViewUserDataSqlProvider">
+    <column id="tableColumn">
+        USER_ID, ACCOUNT, PASSWORD, SCHOOL, SCHOOL_SYSTEM_SNO, SCHOOL_SYSTEM_NAME, 
+        SCHOOL_PRESIDENT, NAME, JOB, TITLE, TITLE_NAME, PHONE, EMAIL, COUNTY_ID, CITY, ROAD, 
+        COUNTY_NAME, CITY_NAME, ROAD_NAME, SCHOOL_ADDRESS, LOGIN_TYPE, LOGIN_TYPE_NAME, STATUS, 
+        SHOW_FLAG, LOGIN_ERROR
+    </column>
+    <select id="selectViewUser">
+        <![CDATA[
+            select * from (
+                select ROW_NUMBER() OVER(ORDER BY USER_ID desc) AS rowId, #{tableColumn} from VW_LOGIN_INFO
+                #{whereString}
+            ) new_Table
+            where rowId >= 1 and rowId <= 10
+        ]]>
+    </select>
+</SqlMap>

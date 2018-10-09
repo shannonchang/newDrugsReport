@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="TbDrugsNoticeSqlProvider">
+    <column id="tableColumn">
+        SNO, IDN, USER_ID, EVENT_SCHOOL_SYSTEM, EVENT_CATEGORY, EVENT_CATEGORY_NAME, COUNSELING_STATUS, 
+        IS_AGAIN, EVENT_REPORT_TIME, NOTICE_SCHEDULE, IS_WRITY_COMPLET, 
+        IS_GIVEN_PEOPLE, FLOW_STATUS, FLOW_ACCOUNT, FLOW_SNO, IS_SETUP_CH, IS_MAJOR_CASE, 
+        NO_SETUP_REMARK, NO_SETUP_REMARK_OTHER, NO_SETUP_REMARK_DATE, NOTICE_STATUS, NOTICE_REASON,
+        CR_DATE, UP_IP, UP_DATE, UP_USER
+    </column>
+    <select id="relativeAuthUser">
+        <![CDATA[
+            ;with user_relative as ( 
+                select USER_ID, RELATIVE_USER_ID
+                  from TB_USER_AUTH_RELATIVE 
+                 where USER_ID = @userId
+                 union all 
+                select uar.USER_ID, uar.RELATIVE_USER_ID
+                  from TB_USER_AUTH_RELATIVE uar 
+                  join user_relative ur on uar.RELATIVE_USER_ID = ur.USER_ID )
+        ]]>
+    </select>
+    <select id="selectTbDrugsNotice">
+        <![CDATA[
+            select #{tableColumn} 
+              from TB_DRUGS_NOTICE
+            #{whereString}
+        ]]>
+    </select>
+    <insert id="insertTbDrugsNotice">
+        <![CDATA[
+            INSERT INTO TB_DRUGS_NOTICE (IDN, USER_ID,  
+                   EVENT_SCHOOL_SYSTEM, EVENT_CATEGORY, EVENT_CATEGORY_NAME,
+                   COUNSELING_STATUS, EVENT_REPORT_TIME, NOTICE_SCHEDULE, 
+                   FLOW_STATUS, IS_SETUP_CH, SETUP_CH_REASON, CR_DATE, UP_IP, UP_DATE, UP_USER)
+            VALUES (@IDN, @USER_ID, @EVENT_SCHOOL_SYSTEM,
+                   @EVENT_CATEGORY, @EVENT_CATEGORY_NAME, 
+                   @COUNSELING_STATUS, @EVENT_REPORT_TIME, @NOTICE_SCHEDULE, 
+                   @FLOW_STATUS, @IS_SETUP_CH, @SETUP_CH_REASON, getDate(), @UP_IP, getDate(), @UP_USER);
+            SELECT SCOPE_IDENTITY() as SNO
+        ]]>
+    </insert>
+    <update id="updateTbDrugsNotice">
+        <![CDATA[
+            UPDATE TB_DRUGS_NOTICE 
+               SET IDN=@IDN, 
+                   USER_ID=@USER_ID,
+                   EVENT_SCHOOL_SYSTEM = @EVENT_SCHOOL_SYSTEM,
+                   EVENT_CATEGORY=@EVENT_CATEGORY, 
+                   EVENT_CATEGORY_NAME=@EVENT_CATEGORY_NAME, 
+                   COUNSELING_STATUS=@COUNSELING_STATUS, 
+                   IS_AGAIN=@IS_AGAIN, 
+                   EVENT_REPORT_TIME=@EVENT_REPORT_TIME, 
+                   NOTICE_SCHEDULE=@NOTICE_SCHEDULE, 
+                   IS_WRITY_COMPLET=@IS_WRITY_COMPLET,
+                   IS_GIVEN_PEOPLE=@IS_GIVEN_PEOPLE,
+                   FLOW_STATUS=@FLOW_STATUS, 
+                   FLOW_ACCOUNT=@FLOW_ACCOUNT, 
+                   FLOW_SNO=@FLOW_SNO, 
+                   IS_SETUP_CH=@IS_SETUP_CH,
+                   IS_MAJOR_CASE =@IS_MAJOR_CASE,
+                   NOTICE_STATUS = @NOTICE_STATUS, 
+                   NOTICE_REASON = @NOTICE_REASON,
+                   SETUP_CH_REASON = @SETUP_CH_REASON,
+                   #{noSetupColumn}
+                   UP_IP=@UP_IP, 
+                   UP_DATE=getDate(), 
+                   UP_USER=@UP_USER
+             WHERE SNO=@SNO
+        ]]>
+    </update>
+    <update id="updDrugsNoticeFromSpcf">
+        <![CDATA[
+            update TB_DRUGS_NOTICE
+               set IS_GIVEN_PEOPLE = @isGivenPeople,
+                   UP_IP = @upIp,
+                   UP_USER = @upUser,
+                   UP_DATE = getDate()
+             where SNO in (select NOTICE_SNO from TB_STU_BASIC_DATA where STU_ID_NO = @stuIdCord)
+               and USER_ID = @userId
+               and IS_GIVEN_PEOPLE = 'N'
+        ]]>
+    </update>
+    <select id="qryDrugsNotice">
+        <![CDATA[
+            SELECT ROW_NUMBER() OVER(ORDER BY SNO DESC) as ROW_ID, 
+                   SNO, IDN, STU_NAME, SEX, SEX_STR, SCHOOL, IS_AGAIN, IS_AGAIN_STR, IS_MAJOR_CASE, IS_MAJOR_CASE_STR,
+                   IS_GIVEN_PEOPLE, IS_GIVEN_PEOPLE_STR, IS_WRITY_COMPLET, IS_WRITY_COMPLET_STR, 
+                   COUNSELING_STATUS, COUNSELING_STATUS_STR, NOTICE_SCHEDULE, NOTICE_SCHEDULE_STR, 
+                   FLOW_SNO, FLOW_STATUS, USER_ID, FLOW_STATUS_STR, COUNTY_ID, COUNTY_STR, 
+                   SCHOOL_SYSTEM_SNO, SCHOOL_SYSTEM_STR, COUNSELING_BEGINTIME, COUNSELING_ENDTIME, 
+                   MEETING_TIME, NOTICE_STATUS, NOTICE_STATUS_STR, NOTICE_REASON, STU_ID_NO
+            FROM VW_DRUGS_NOTICE dn
+             #{whereString}
+        ]]>
+    </select>
+    <select id="qryDrugsNoticeCount">
+        <![CDATA[
+            SELECT count(*)
+            FROM VW_DRUGS_NOTICE dn
+             #{whereString}
+        ]]>
+    </select>
+    <select id="qryDrugsNoticeByStatusE">
+        <![CDATA[
+            select ROW_NUMBER() OVER(ORDER BY SNO DESC) as ROW_ID, 
+                   SNO, IDN, USER_ID, NOTICE_SCHOOL, EVENT_SCHOOL_SYSTEM, EVENT_SCHOOL_SYSTEM_STR, EVENT_CATEGORY, 
+                   EVENT_CATEGORY_NAME, NOTICE_STATUS, NOTICE_REASON, STU_NAME, SEX_STR
+              from (select SNO, IDN, USER_ID, (select SCHOOL from TB_USER_DATA ua where ua.USER_ID = dn.USER_ID) as NOTICE_SCHOOL,
+                           EVENT_SCHOOL_SYSTEM, 
+                           (select COMM_VALUE from TB_COMMON_CODE 
+                             where COMM_TYPE = 'SSNO' and COMM_CODE = EVENT_SCHOOL_SYSTEM) as EVENT_SCHOOL_SYSTEM_STR,
+                           EVENT_CATEGORY, EVENT_CATEGORY_NAME, NOTICE_STATUS, NOTICE_REASON,
+                           sbd.STU_NAME, sbd.SEX, case sbd.SEX when 'M' then '男' when 'F' then '女' end as SEX_STR
+                      from TB_DRUGS_NOTICE dn
+                      join TB_STU_BASIC_DATA sbd on sbd.NOTICE_SNO = dn.SNO
+                     where NOTICE_STATUS = 'E') ERR_BULL_NOTICE
+            #{whereString}
+        ]]>
+    </select>
+    <select id="qryStuAgainRecord">
+        <![CDATA[
+            select IDN, STU_NAME, SCHOOL
+              from (select SNO, IDN, STU_NAME, SCHOOL, STU_ID_NO from VW_DRUGS_NOTICE
+                     union all
+                    select Sno, convert(varchar,idn), Name, School, ID_Card_Eng + ID_Card from TB_OLD_DrugsList) record_table
+            #{whereString}
+        ]]>
+    </select>
+    <select id="qryStuAgainRecordCount">
+        <![CDATA[
+            select count(*)
+              from (select SNO, IDN, STU_NAME, SCHOOL, STU_ID_NO from VW_DRUGS_NOTICE
+                     union all
+                    select Sno, convert(varchar,idn), Name, School, ID_Card_Eng + ID_Card from TB_OLD_DrugsList) record_table
+            #{whereString}
+        ]]>
+    </select>
+    <select id="loginMsgByAdmin">
+        <![CDATA[
+            select (select '今日通報筆數共'+ convert(varchar, count(*)) + '筆' from TB_DRUGS_NOTICE dn
+                     where EVENT_REPORT_TIME >= convert(date, getdate()) and EVENT_REPORT_TIME <= convert(date, getDate()+1)
+                     #{whereString}
+                     ) + isnull(', '+SUBSTRING(#tmp, 0, len(#tmp)),'')
+              from (select #tmp = (select (select COMM_VALUE from TB_COMMON_CODE where COMM_TYPE = 'SSNO' 
+                                              and COMM_CODE = EVENT_SCHOOL_SYSTEM) + convert(varchar, count(1)) + '筆,'
+                                     from TB_DRUGS_NOTICE
+                                    where EVENT_REPORT_TIME >= convert(date, getdate()) and EVENT_REPORT_TIME <= convert(date, getDate()+1)
+                                     #{whereString}
+                                    group by EVENT_SCHOOL_SYSTEM
+                                    order by EVENT_SCHOOL_SYSTEM for xml path('')) ) tt
+        ]]>
+    </select>
+    <select id="loginMsg">
+        <![CDATA[
+            select '仍有'+(select convert(varchar, count(*)) from VW_DRUGS_NOTICE 
+                            where USER_ID = @userId and IS_WRITY_COMPLET = 'N' and NOTICE_STATUS = 'N' )+'件個案未填寫身份證字號'+
+                    isnull('，通報序號分別為：'+SUBSTRING(#tmp, 0, len(#tmp)) + '，請盡速至學生基本資料做填寫謝謝。','')
+               from (select #tmp = ( select IDN+'、' from VW_DRUGS_NOTICE 
+                              where USER_ID = @userId and IS_WRITY_COMPLET = 'N' and NOTICE_STATUS = 'N' for xml path(''))) tt
+        ]]>
+    </select>
+</SqlMap>

@@ -1,0 +1,482 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="ReportViewSqlProvider">
+    <select id="relativeAuthUser" desc="查詢階層">
+        <![CDATA[
+            ;with user_relative as ( 
+                select USER_ID, RELATIVE_USER_ID
+                  from TB_USER_AUTH_RELATIVE 
+                 where USER_ID = @USER_ID
+                 union all 
+                select uar.USER_ID, uar.RELATIVE_USER_ID
+                  from TB_USER_AUTH_RELATIVE uar 
+                  join user_relative ur on uar.RELATIVE_USER_ID = ur.USER_ID )
+        ]]>
+    </select>
+    <select id="qryDynamicReport" desc="動態報表">
+        <![CDATA[
+            select ROW_NUMBER() OVER(ORDER BY dn.SNO DESC) as ROW_ID, dn.SNO, CONVERT(VARCHAR,dn.IDN) as IDN, dn.USER_ID, ud.SCHOOL,
+                   sbd.STU_NAME, sbd.STU_ID_NO, sbd.SEX, case sbd.SEX when 'M' then '男' when 'F' then '女' end as SEX_STR, STU_BIRTH,
+                   (sbd.EDU_DVS_STR +'間部, '+ isnull((select COMM_VALUE+'班' from TB_COMMON_CODE where COMM_TYPE = 'EDULV' and COMM_CODE = sbd.EDU_LEVEL),'')+ isnull(sbd.EDU_GRADE+'年級','') + isnull(sbd.EDU_DEPT,'')) as EDU_INFO, 
+                   dn.IS_AGAIN, case dn.IS_AGAIN when 'Y' then '是' when 'N' then '否' end as IS_AGAIN_STR,
+                   dn.IS_GIVEN_PEOPLE, case dn.IS_GIVEN_PEOPLE when 'Y' then '是' when 'S' then '是(補)' when 'N' then '否' end as IS_GIVEN_PEOPLE_STR, 
+                   dn.IS_WRITY_COMPLET, case dn.IS_WRITY_COMPLET when 'Y' then '已完成' when 'N' then '未完成' end as IS_WRITY_COMPLET_STR,
+                   dn.IS_SETUP_CH, case dn.IS_SETUP_CH when 'Y' then '成立' when 'N' then '未成立' end as IS_SETUP_CH_STR,
+                   dn.IS_MAJOR_CASE, case dn.IS_MAJOR_CASE when 'Y' then '是' when 'N' then '否' end as IS_MAJOR_CASE_STR, 
+                   dn.COUNSELING_STATUS, (select COMM_VALUE from TB_COMMON_CODE comm where COMM_TYPE = 'COLS' and COMM_CODE = dn.COUNSELING_STATUS) as COUNSELING_STATUS_STR, 
+                   dn.NOTICE_SCHEDULE, (select COMM_VALUE from TB_COMMON_CODE comm where COMM_TYPE = 'SCDU' and COMM_CODE = dn.NOTICE_SCHEDULE) as NOTICE_SCHEDULE_STR,
+                   dn.FLOW_SNO, dn.FLOW_STATUS, (select COMM_VALUE from TB_COMMON_CODE comm where COMM_TYPE = 'FWST' and COMM_CODE = dn.FLOW_STATUS) as FLOW_STATUS_STR,
+                   ud.COUNTY_ID, (select COMM_VALUE from TB_COMMON_CODE comm where COMM_TYPE = 'COUNTY' and COMM_CODE = ud.COUNTY_ID) as COUNTY_STR,
+                   ud.SCHOOL_SYSTEM_SNO, (select COMM_VALUE from TB_COMMON_CODE comm where COMM_TYPE = 'SSNO' and COMM_CODE = ud.SCHOOL_SYSTEM_SNO) as SCHOOL_SYSTEM_STR,
+                   dn.EVENT_REPORT_TIME, clt.COUNSELING_BEGINTIME, clt.COUNSELING_ENDTIME, mi.MEETING_TIME as CLOSE_METTING_TIME,
+                   dn.NOTICE_STATUS, case dn.NOTICE_STATUS when 'E' then '誤報' when 'R' then '退回' when 'D' then '已審核確認為誤報' end as NOTICE_STATUS_STR, dn.NOTICE_REASON,
+                   mi.COUNSELING_TRACK, sbd.IS_POLICE_SEIZED, case sbd.IS_POLICE_SEIZED when 'Y' then '是' when 'N' then '否' end as IS_POLICE_SEIZED_STR,
+                   sbd.DRUGS_ORIGIN, sbd.DRUGS_ORIGIN_STR, sbd.DRUGS_EVENT_TYPE, sbd.DRUGS_EVENT_TYPE_STR, sbd.USE_REASON, sbd.USE_REASON_STR
+              from TB_DRUGS_NOTICE dn
+              left join TB_USER_DATA ud on ud.USER_ID = dn.USER_ID
+              join VW_STU_BASIC_DATA sbd on dn.SNO = sbd.NOTICE_SNO
+              left join (select mi.NOTICE_SNO, MIN(mi.COUNSELING_BEGINTIME) as COUNSELING_BEGINTIME, 
+                           MAX(mi.COUNSELING_ENDTIME) as COUNSELING_ENDTIME
+                      from TB_MEETING_INFO mi group by mi.NOTICE_SNO ) clt on clt.NOTICE_SNO = dn.SNO
+              left join TB_MEETING_INFO mi on mi.NOTICE_SNO = dn.SNO and mi.MEETING_TYPE = 'CLS'
+             where dn.IS_WRITY_COMPLET = 'Y' and dn.NOTICE_STATUS = 'N'
+            #{whereString}
+        ]]>
+    </select>
+    <select id="peopleAmountOnMonthReport" desc="藥物濫用學生人數月報表">
+        <![CDATA[
+            ;with COUNT_TABLE as(
+                select comm.COMM_CODE, comm.COMM_VALUE,
+                       isnull(unvd.ORIG_COUNT, 0) as UNVD_ORIG_COUNT, isnull(unvd.ADD_COUNT, 0) as UNVD_ADD_COUNT, 
+                       isnull(unvd.SUCS_COUNT, 0) as UNVD_SUCS_COUNT, isnull(unvd.CONT_COUNT, 0) as UNVD_CONT_COUNT, 
+                       isnull(unvd.BREAK_COUNT, 0) as UNVD_BREAK_COUNT, isnull(unvd.SCHOOL_LINE, 0) as UNVD_SCHOOL_COUNT
+                     ,
+                       isnull(unvn.ORIG_COUNT, 0) as UNVN_ORIG_COUNT, isnull(unvn.ADD_COUNT, 0) as UNVN_ADD_COUNT, 
+                       isnull(unvn.SUCS_COUNT, 0) as UNVN_SUCS_COUNT, isnull(unvn.CONT_COUNT, 0) as UNVN_CONT_COUNT, 
+                       isnull(unvn.BREAK_COUNT, 0) as UNVN_BREAK_COUNT, isnull(unvn.SCHOOL_LINE, 0) as UNVN_SCHOOL_COUNT
+                     ,
+                       isnull(hschd.ORIG_COUNT, 0) as HSCHD_ORIG_COUNT, isnull(hschd.ADD_COUNT, 0) as HSCHD_ADD_COUNT, 
+                       isnull(hschd.SUCS_COUNT, 0) as HSCHD_SUCS_COUNT, isnull(hschd.CONT_COUNT, 0) as HSCHD_CONT_COUNT, 
+                       isnull(hschd.BREAK_COUNT, 0) as HSCHD_BREAK_COUNT, isnull(hschd.SCHOOL_LINE, 0) as HSCHD_SCHOOL_COUNT
+                     ,
+                       isnull(hschn.ORIG_COUNT, 0) as HSCHN_ORIG_COUNT, isnull(hschn.ADD_COUNT, 0) as HSCHN_ADD_COUNT, 
+                       isnull(hschn.SUCS_COUNT, 0) as HSCHN_SUCS_COUNT, isnull(hschn.CONT_COUNT, 0) as HSCHN_CONT_COUNT, 
+                       isnull(hschn.BREAK_COUNT, 0) as HSCHN_BREAK_COUNT, isnull(hschn.SCHOOL_LINE, 0) as HSCHN_SCHOOL_COUNT
+                     ,
+                       isnull(vschd.ORIG_COUNT, 0) as VSCHD_ORIG_COUNT, isnull(vschd.ADD_COUNT, 0) as VSCHD_ADD_COUNT, 
+                       isnull(vschd.SUCS_COUNT, 0) as VSCHD_SUCS_COUNT, isnull(vschd.CONT_COUNT, 0) as VSCHD_CONT_COUNT, 
+                       isnull(vschd.BREAK_COUNT, 0) as VSCHD_BREAK_COUNT, isnull(vschd.SCHOOL_LINE, 0) as VSCHD_SCHOOL_COUNT
+                     ,
+                       isnull(hschn.ORIG_COUNT, 0) as VSCHN_ORIG_COUNT, isnull(hschn.ADD_COUNT, 0) as VSCHN_ADD_COUNT, 
+                       isnull(hschn.SUCS_COUNT, 0) as VSCHN_SUCS_COUNT, isnull(hschn.CONT_COUNT, 0) as VSCHN_CONT_COUNT, 
+                       isnull(hschn.BREAK_COUNT, 0) as VSCHN_BREAK_COUNT, isnull(hschn.SCHOOL_LINE, 0) as VSCHN_SCHOOL_COUNT
+                     ,
+                       isnull(seco.ORIG_COUNT, 0) as SECO_ORIG_COUNT, isnull(seco.ADD_COUNT, 0) as SECO_ADD_COUNT, 
+                       isnull(seco.SUCS_COUNT, 0) as SECO_SUCS_COUNT, isnull(seco.CONT_COUNT, 0) as SECO_CONT_COUNT, 
+                       isnull(seco.BREAK_COUNT, 0) as SECO_BREAK_COUNT, isnull(seco.SCHOOL_LINE, 0) as SECO_SCHOOL_COUNT
+                     ,
+                       isnull(nati.ORIG_COUNT, 0) as NATI_ORIG_COUNT, isnull(nati.ADD_COUNT, 0) as NATI_ADD_COUNT, 
+                       isnull(nati.SUCS_COUNT, 0) as NATI_SUCS_COUNT, isnull(nati.CONT_COUNT, 0) as NATI_CONT_COUNT, 
+                       isnull(nati.BREAK_COUNT, 0) as NATI_BREAK_COUNT, isnull(nati.SCHOOL_LINE, 0) as NATI_SCHOOL_COUNT
+                  from (select COMM_CODE, COMM_VALUE from TB_COMMON_CODE where COMM_TYPE = 'COUNTY') comm
+                  left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                    isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                               from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                            sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                            (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                       from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                      where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                    dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                               from dbo.VW_DRUGS_NOTICE dn
+                                              where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                and dn.SCHOOL_SYSTEM_SNO = '1' and dn.EDU_DVS = 'D' #{whereString}) tmp
+                                       group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                              group by COUNTY_ID) unvd on comm.COMM_CODE = unvd.COUNTY_ID
+                  left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                    isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                               from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                            sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                            (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                       from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                      where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                    (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                      where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                    dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                               from dbo.VW_DRUGS_NOTICE dn
+                                              where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                and dn.SCHOOL_SYSTEM_SNO = '1' and dn.EDU_DVS = 'N' #{whereString}) tmp
+                                       group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                               group by COUNTY_ID) unvn on comm.COMM_CODE = unvn.COUNTY_ID
+                   left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                     isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                                from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                             sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                             (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                        from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                       where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                     dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                                from dbo.VW_DRUGS_NOTICE dn
+                                               where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                 and dn.SCHOOL_SYSTEM_SNO = '2' and dn.EDU_DVS = 'D' #{whereString}) tmp
+                                        group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                               group by COUNTY_ID) hschd on comm.COMM_CODE = hschd.COUNTY_ID
+                   left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                     isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                                from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                             sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                             (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                        from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                       where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                     (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                       where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                     dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                                from dbo.VW_DRUGS_NOTICE dn
+                                               where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                 and dn.SCHOOL_SYSTEM_SNO = '2' and dn.EDU_DVS = 'N' #{whereString}) tmp
+                                        group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                                group by COUNTY_ID) hschn on comm.COMM_CODE = hschn.COUNTY_ID
+                    left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                      isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                                 from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                              sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                              (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                         from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                        where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                      dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                                 from dbo.VW_DRUGS_NOTICE dn
+                                                where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                  and dn.SCHOOL_SYSTEM_SNO = '6' and dn.EDU_DVS = 'D' #{whereString}) tmp
+                                         group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                                group by COUNTY_ID) vschd on comm.COMM_CODE = vschd.COUNTY_ID
+                    left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                      isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                                 from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                              sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                              (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                         from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                        where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                      dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                                 from dbo.VW_DRUGS_NOTICE dn
+                                                where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                  and dn.SCHOOL_SYSTEM_SNO = '6' and dn.EDU_DVS = 'N' #{whereString}) tmp
+                                         group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                                group by COUNTY_ID) vschn on comm.COMM_CODE = vschn.COUNTY_ID
+                    left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                      isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                                 from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                              sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                              (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                         from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                        where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                      dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                                 from dbo.VW_DRUGS_NOTICE dn
+                                                where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                  and dn.SCHOOL_SYSTEM_SNO = '3' #{whereString}) tmp
+                                         group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                                group by COUNTY_ID) seco on comm.COMM_CODE = seco.COUNTY_ID
+                     left join (select COUNTY_ID, isnull(sum(ORIG_COUNT),0) as ORIG_COUNT, isnull(sum(ADD_COUNT),0) as ADD_COUNT, isnull(sum(SUCS_COUNT),0) as SUCS_COUNT, 
+                                      isnull(sum(CONT_COUNT),0) as CONT_COUNT, isnull(sum(BREAK_COUNT),0) as BREAK_COUNT, isnull(sum(SCHOOL_LINE),0) as SCHOOL_LINE
+                                 from (select tmp.COUNTY_ID, sum(tmp.ORIG_LINE) as ORIG_COUNT, sum(tmp.ADD_LINE) as ADD_COUNT, sum(tmp.SUCS_LINE) as SUCS_COUNT,
+                                              sum(tmp.CONT_LINE) as CONT_COUNT, sum(tmp.BREAK_LINE) as BREAK_COUNT, 
+                                              (select count(ud.USER_ID) from TB_USER_DATA ud where ud.USER_ID = tmp.USER_ID) as SCHOOL_LINE
+                                         from (select (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn
+                                                        where year(tdn.EVENT_REPORT_TIME) <= @qryYYYY and month(tdn.EVENT_REPORT_TIME) < @qryMM and tdn.SNO = dn.SNO and COUNSELING_STATUS = '12') as ORIG_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where year(tdn.EVENT_REPORT_TIME) = @qryYYYY and month(tdn.EVENT_REPORT_TIME) = @qryMM and tdn.SNO = dn.SNO) as ADD_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '1' and tdn.SNO = dn.SNO) as SUCS_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS = '13' and tdn.SNO = dn.SNO) as CONT_LINE,
+                                                      (select count(tdn.SNO) from dbo.TB_DRUGS_NOTICE tdn 
+                                                        where tdn.COUNSELING_STATUS in ('2','3','4','5','6') and tdn.SNO = dn.SNO) as BREAK_LINE,
+                                                      dn.USER_ID, dn.COUNTY_ID, dn.COUNTY_STR, dn.SCHOOL_SYSTEM_STR
+                                                 from dbo.VW_DRUGS_NOTICE dn
+                                                where dn.IS_SETUP_CH = 'Y' and dn.NOTICE_STATUS = 'N' and dn.IS_WRITY_COMPLET = 'Y'
+                                                  and dn.SCHOOL_SYSTEM_SNO = '4' #{whereString}) tmp
+                                         group by tmp.COUNTY_ID, tmp.USER_ID) sumtmp
+                                group by COUNTY_ID) nati on comm.COMM_CODE = nati.COUNTY_ID
+            )
+            select COUNTY_STR,
+                   UNVD_ORIG_COUNT, UNVD_ADD_COUNT, UNVD_SUCS_COUNT, UNVD_CONT_COUNT, UNVD_BREAK_COUNT, UNVD_SCHOOL_COUNT, 
+                           UNVN_ORIG_COUNT, UNVN_ADD_COUNT, UNVN_SUCS_COUNT, UNVN_CONT_COUNT, UNVN_BREAK_COUNT, UNVN_SCHOOL_COUNT,
+                           HSCHD_ORIG_COUNT, HSCHD_ADD_COUNT, HSCHD_SUCS_COUNT, HSCHD_CONT_COUNT, HSCHD_BREAK_COUNT, HSCHD_SCHOOL_COUNT,
+                           HSCHN_ORIG_COUNT, HSCHN_ADD_COUNT, HSCHN_SUCS_COUNT, HSCHN_CONT_COUNT, HSCHN_BREAK_COUNT, HSCHN_SCHOOL_COUNT,
+                           VSCHD_ORIG_COUNT, VSCHD_ADD_COUNT, VSCHD_SUCS_COUNT, VSCHD_CONT_COUNT, VSCHD_BREAK_COUNT, VSCHD_SCHOOL_COUNT,
+                           VSCHN_ORIG_COUNT, VSCHN_ADD_COUNT, VSCHN_SUCS_COUNT, VSCHN_CONT_COUNT, VSCHN_BREAK_COUNT, VSCHN_SCHOOL_COUNT,
+                           SECO_ORIG_COUNT, SECO_ADD_COUNT, SECO_SUCS_COUNT, SECO_CONT_COUNT, SECO_BREAK_COUNT, SECO_SCHOOL_COUNT,
+                           NATI_ORIG_COUNT, NATI_ADD_COUNT, NATI_SUCS_COUNT, NATI_CONT_COUNT, NATI_BREAK_COUNT, NATI_SCHOOL_COUNT,
+                           TOTAL_ORIG_COUNT, TOTAL_ADD_COUNT, TOTAL_SUCS_COUNT, TOTAL_CONT_COUNT, TOTAL_BREAK_COUNT, TOTAL_SCHOOL_COUNT
+              from (select COMM_CODE, COMM_VALUE as COUNTY_STR,
+                           UNVD_ORIG_COUNT, UNVD_ADD_COUNT, UNVD_SUCS_COUNT, UNVD_CONT_COUNT, UNVD_BREAK_COUNT, UNVD_SCHOOL_COUNT, 
+                           UNVN_ORIG_COUNT, UNVN_ADD_COUNT, UNVN_SUCS_COUNT, UNVN_CONT_COUNT, UNVN_BREAK_COUNT, UNVN_SCHOOL_COUNT,
+                           HSCHD_ORIG_COUNT, HSCHD_ADD_COUNT, HSCHD_SUCS_COUNT, HSCHD_CONT_COUNT, HSCHD_BREAK_COUNT, HSCHD_SCHOOL_COUNT,
+                           HSCHN_ORIG_COUNT, HSCHN_ADD_COUNT, HSCHN_SUCS_COUNT, HSCHN_CONT_COUNT, HSCHN_BREAK_COUNT, HSCHN_SCHOOL_COUNT,
+                           VSCHD_ORIG_COUNT, VSCHD_ADD_COUNT, VSCHD_SUCS_COUNT, VSCHD_CONT_COUNT, VSCHD_BREAK_COUNT, VSCHD_SCHOOL_COUNT,
+                           VSCHN_ORIG_COUNT, VSCHN_ADD_COUNT, VSCHN_SUCS_COUNT, VSCHN_CONT_COUNT, VSCHN_BREAK_COUNT, VSCHN_SCHOOL_COUNT,
+                           SECO_ORIG_COUNT, SECO_ADD_COUNT, SECO_SUCS_COUNT, SECO_CONT_COUNT, SECO_BREAK_COUNT, SECO_SCHOOL_COUNT,
+                           NATI_ORIG_COUNT, NATI_ADD_COUNT, NATI_SUCS_COUNT, NATI_CONT_COUNT, NATI_BREAK_COUNT, NATI_SCHOOL_COUNT,
+                           (UNVD_ORIG_COUNT + UNVN_ORIG_COUNT + HSCHD_ORIG_COUNT + HSCHN_ORIG_COUNT + VSCHD_ORIG_COUNT + VSCHN_ORIG_COUNT + SECO_ORIG_COUNT + NATI_ORIG_COUNT) as TOTAL_ORIG_COUNT,
+                           (UNVD_ADD_COUNT + UNVN_ADD_COUNT + HSCHD_ADD_COUNT + HSCHN_ADD_COUNT + VSCHD_ADD_COUNT + VSCHN_ADD_COUNT + SECO_ADD_COUNT + NATI_ADD_COUNT) as TOTAL_ADD_COUNT,
+                           (UNVD_SUCS_COUNT + UNVN_SUCS_COUNT + HSCHD_SUCS_COUNT + HSCHN_SUCS_COUNT + VSCHD_SUCS_COUNT + VSCHN_SUCS_COUNT + SECO_SUCS_COUNT + NATI_SUCS_COUNT) as TOTAL_SUCS_COUNT,
+                           (UNVD_CONT_COUNT + UNVN_CONT_COUNT + HSCHD_CONT_COUNT + HSCHN_CONT_COUNT + VSCHD_CONT_COUNT + VSCHN_CONT_COUNT + SECO_CONT_COUNT + NATI_CONT_COUNT) as TOTAL_CONT_COUNT,
+                           (UNVD_BREAK_COUNT + UNVN_BREAK_COUNT + HSCHD_BREAK_COUNT + HSCHN_BREAK_COUNT + VSCHD_BREAK_COUNT + VSCHN_BREAK_COUNT + SECO_BREAK_COUNT + NATI_BREAK_COUNT) as TOTAL_BREAK_COUNT,
+                           (UNVD_SCHOOL_COUNT + UNVN_SCHOOL_COUNT + HSCHD_SCHOOL_COUNT + HSCHN_SCHOOL_COUNT + VSCHD_SCHOOL_COUNT + VSCHN_SCHOOL_COUNT + SECO_SCHOOL_COUNT + NATI_SCHOOL_COUNT) as TOTAL_SCHOOL_COUNT
+                      from COUNT_TABLE
+                     union all
+                    select 99 as COMM_CODE, '合計' as COUNTY_STR,
+                           sum(UNVD_ORIG_COUNT), sum(UNVD_ADD_COUNT), sum(UNVD_SUCS_COUNT), sum(UNVD_CONT_COUNT), sum(UNVD_BREAK_COUNT), sum(UNVD_SCHOOL_COUNT), 
+                           sum(UNVN_ORIG_COUNT), sum(UNVN_ADD_COUNT), sum(UNVN_SUCS_COUNT), sum(UNVN_CONT_COUNT), sum(UNVN_BREAK_COUNT), sum(UNVN_SCHOOL_COUNT),
+                           sum(HSCHD_ORIG_COUNT), sum(HSCHD_ADD_COUNT), sum(HSCHD_SUCS_COUNT), sum(HSCHD_CONT_COUNT), sum(HSCHD_BREAK_COUNT), sum(HSCHD_SCHOOL_COUNT),
+                           sum(HSCHN_ORIG_COUNT), sum(HSCHN_ADD_COUNT), sum(HSCHN_SUCS_COUNT), sum(HSCHN_CONT_COUNT), sum(HSCHN_BREAK_COUNT), sum(HSCHN_SCHOOL_COUNT),
+                           sum(VSCHD_ORIG_COUNT), sum(VSCHD_ADD_COUNT), sum(VSCHD_SUCS_COUNT), sum(VSCHD_CONT_COUNT), sum(VSCHD_BREAK_COUNT), sum(VSCHD_SCHOOL_COUNT),
+                           sum(VSCHN_ORIG_COUNT), sum(VSCHN_ADD_COUNT), sum(VSCHN_SUCS_COUNT), sum(VSCHN_CONT_COUNT), sum(VSCHN_BREAK_COUNT), sum(VSCHN_SCHOOL_COUNT),
+                           sum(SECO_ORIG_COUNT), sum(SECO_ADD_COUNT), sum(SECO_SUCS_COUNT), sum(SECO_CONT_COUNT), sum(SECO_BREAK_COUNT), sum(SECO_SCHOOL_COUNT),
+                           sum(NATI_ORIG_COUNT), sum(NATI_ADD_COUNT), sum(NATI_SUCS_COUNT), sum(NATI_CONT_COUNT), sum(NATI_BREAK_COUNT), sum(NATI_SCHOOL_COUNT),
+                           (SUM(UNVD_ORIG_COUNT) + SUM(UNVN_ORIG_COUNT) + SUM(HSCHD_ORIG_COUNT) + SUM(HSCHN_ORIG_COUNT) + SUM(VSCHD_ORIG_COUNT) + SUM(VSCHN_ORIG_COUNT) + SUM(SECO_ORIG_COUNT) + SUM(NATI_ORIG_COUNT)) as TOTAL_ORIG_COUNT,
+                           (SUM(UNVD_ADD_COUNT) + SUM(UNVN_ADD_COUNT) + SUM(HSCHD_ADD_COUNT) + SUM(HSCHN_ADD_COUNT) + SUM(VSCHD_ADD_COUNT) + SUM(VSCHN_ADD_COUNT) + SUM(SECO_ADD_COUNT) + SUM(NATI_ADD_COUNT)) as TOTAL_ADD_COUNT,
+                           (SUM(UNVD_SUCS_COUNT) + SUM(UNVN_SUCS_COUNT) + SUM(HSCHD_SUCS_COUNT) + SUM(HSCHN_SUCS_COUNT) + SUM(VSCHD_SUCS_COUNT) + SUM(VSCHN_SUCS_COUNT) + SUM(SECO_SUCS_COUNT) + SUM(NATI_SUCS_COUNT)) as TOTAL_SUCS_COUNT,
+                           (SUM(UNVD_CONT_COUNT) + SUM(UNVN_CONT_COUNT) + SUM(HSCHD_CONT_COUNT) + SUM(HSCHN_CONT_COUNT) + SUM(VSCHD_CONT_COUNT) + SUM(VSCHN_CONT_COUNT) + SUM(SECO_CONT_COUNT) + SUM(NATI_CONT_COUNT)) as TOTAL_CONT_COUNT,
+                           (SUM(UNVD_BREAK_COUNT) + SUM(UNVN_BREAK_COUNT) + SUM(HSCHD_BREAK_COUNT) + SUM(HSCHN_BREAK_COUNT) + SUM(VSCHD_BREAK_COUNT) + SUM(VSCHN_BREAK_COUNT) + SUM(SECO_BREAK_COUNT) + SUM(NATI_BREAK_COUNT)) as TOTAL_BREAK_COUNT,
+                           (SUM(UNVD_SCHOOL_COUNT) + SUM(UNVN_SCHOOL_COUNT) + SUM(HSCHD_SCHOOL_COUNT) + SUM(HSCHN_SCHOOL_COUNT) + SUM(VSCHD_SCHOOL_COUNT) + SUM(VSCHN_SCHOOL_COUNT) + SUM(SECO_SCHOOL_COUNT) + SUM(NATI_SCHOOL_COUNT)) as TOTAL_SCHOOL_COUNT
+                      from COUNT_TABLE
+            ) COUNT_REPORT
+             order by convert(int, COMM_CODE)
+        ]]>
+    </select>
+    <select id="peopleAmountByDrugsLv" desc="人數藥物濫用分級一覽表" >
+        <![CDATA[
+            select EVENT_REPORT_YEAR, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5,
+                   (LEVEL_1 + LEVEL_2+ LEVEL_3+ LEVEL_4+ LEVEL_5) as YEAR_TOTAL
+              from (select convert(varchar, YEAR(dn.EVENT_REPORT_TIME)) as EVENT_REPORT_YEAR,
+                           count(case when sud.DRUGS_LEVEL = 1 then 1 else null end) as LEVEL_1,
+                           count(case when sud.DRUGS_LEVEL = 2 then 1 else null end) as LEVEL_2,
+                           count(case when sud.DRUGS_LEVEL = 3 then 1 else null end) as LEVEL_3,
+                           count(case when sud.DRUGS_LEVEL = 4 then 1 else null end) as LEVEL_4,
+                           count(case when sud.DRUGS_LEVEL = 5 then 1 else null end) as LEVEL_5
+                      from TB_DRUGS_NOTICE dn
+                      join TB_STU_USE_DRUGS sud on sud.NOTICE_SNO = dn.SNO
+                     where dn.IS_WRITY_COMPLET = 'Y'
+                       and dn.NOTICE_STATUS = 'N'
+                       and dn.IS_SETUP_CH = 'Y'
+                       and YEAR(dn.EVENT_REPORT_TIME) between @beginYear and @endYear
+                       #{whereString}
+                     group by YEAR(dn.EVENT_REPORT_TIME)
+                     union all
+                    select '合計', count(case when sud.DRUGS_LEVEL = 1 then 1 else null end) as LEVEL_1,
+                           count(case when sud.DRUGS_LEVEL = 2 then 1 else null end) as LEVEL_2,
+                           count(case when sud.DRUGS_LEVEL = 3 then 1 else null end) as LEVEL_3,
+                           count(case when sud.DRUGS_LEVEL = 4 then 1 else null end) as LEVEL_4,
+                           count(case when sud.DRUGS_LEVEL = 5 then 1 else null end) as LEVEL_5
+                      from TB_DRUGS_NOTICE dn
+                      join TB_STU_USE_DRUGS sud on sud.NOTICE_SNO = dn.SNO
+                     where dn.IS_WRITY_COMPLET = 'Y'
+                       and dn.NOTICE_STATUS = 'N'
+                       and dn.IS_SETUP_CH = 'Y'
+                       and YEAR(dn.EVENT_REPORT_TIME) between @beginYear and @endYear 
+                       #{whereString} ) new_table
+        ]]>
+    </select>
+    <select id="stuUseDrugs" desc="學生常見藥物濫用種類統計表(動態sql)">
+        <![CDATA[
+            DECLARE @dycSql varchar(max), @drugsCode varchar(500), @drugsColumn varchar(max), @sumCode varchar(1000)
+             select @drugsCode = SUBSTRING(#tmp, 0, LEN(#tmp)) 
+               from ( select #tmp = (select '['+DRUGS_CODE+'], ' from dbo.TB_DRUGS for xml path('')) ) tt
+             select @sumCode = SUBSTRING(#tmp, 0, LEN(#tmp)) 
+               from ( select #tmp = (select 'isnull(sum(['+DRUGS_CODE+']),0) + ' from dbo.TB_DRUGS for xml path('')) ) tt
+             select @drugsColumn = SUBSTRING(#tmp, 0, LEN(#tmp)) 
+               from ( select #tmp = (select 'isnull(sum(['+DRUGS_CODE+']),0) as ['+DRUGS_NAME+'], ' from dbo.TB_DRUGS for xml path('')) ) tt
+                set @dycSql = 'select convert(varchar,EVENT_YEAR) as [年度], '+@drugsColumn+', 
+                                      ('+ @sumCode +') as 小計 
+                                 from (select tg.DRUGS_CODE, tg.DRUGS_NAME, count(sud.NOTICE_SNO) USE_COUNT, sud.EVENT_YEAR
+                                         from TB_DRUGS tg
+                                         left join (select tsud.NOTICE_SNO, tsud.DRUGS_LEVEL, tsud.DRUGS_CODE, YEAR(tdn.EVENT_REPORT_TIME) as EVENT_YEAR 
+                                                      from TB_STU_USE_DRUGS tsud
+                                                      join TB_DRUGS_NOTICE tdn on tdn.SNO = tsud.NOTICE_SNO and tdn.NOTICE_STATUS = 'N'
+                                                       and YEAR(tdn.EVENT_REPORT_TIME) >= convert(int, '+@beginYear+')
+                                                       and YEAR(tdn.EVENT_REPORT_TIME) <= convert(int, '+@endYear+')
+                                                       #{whereString}
+                                                   ) sud on sud.DRUGS_LEVEL = tg.DRUGS_LEVEL and sud.DRUGS_CODE = tg.DRUGS_CODE
+                                        group by tg.DRUGS_CODE, tg.DRUGS_NAME, sud.EVENT_YEAR) as SOURCE_TABLE
+                                pivot (sum(USE_COUNT) for DRUGS_CODE in ('+@drugsCode+')  )as PIVOT_TABLE
+                                where EVENT_YEAR is not null
+                                group by EVENT_YEAR
+                                union all 
+                               select ''合計'', '+@drugsColumn+',
+                                      ('+ @sumCode +') as 小計  
+                                 from (select tg.DRUGS_CODE, tg.DRUGS_NAME, count(sud.NOTICE_SNO) USE_COUNT, sud.EVENT_YEAR
+                                         from TB_DRUGS tg
+                                         left join (select tsud.NOTICE_SNO, tsud.DRUGS_LEVEL, tsud.DRUGS_CODE, YEAR(tdn.EVENT_REPORT_TIME) as EVENT_YEAR 
+                                                      from TB_STU_USE_DRUGS tsud
+                                                      join TB_DRUGS_NOTICE tdn on tdn.SNO = tsud.NOTICE_SNO and tdn.NOTICE_STATUS = 'N'
+                                                       and YEAR(tdn.EVENT_REPORT_TIME) >= convert(int, '+@beginYear+')
+                                                       and YEAR(tdn.EVENT_REPORT_TIME) <= convert(int, '+@endYear+') 
+                                                      #{whereString} 
+                                                   ) sud on sud.DRUGS_LEVEL = tg.DRUGS_LEVEL and sud.DRUGS_CODE = tg.DRUGS_CODE
+                                        group by tg.DRUGS_CODE, tg.DRUGS_NAME, sud.EVENT_YEAR) as SOURCE_TABLE
+                                pivot (sum(USE_COUNT) for DRUGS_CODE in ('+@drugsCode+')  )as PIVOT_TABLE'
+            EXEC(@dycSql)
+        ]]>
+    </select>
+    
+    <select id="spcfCategoryCount" desc="學校特定人員數量統計表">
+        <![CDATA[
+            select COMM_VALUE, TYPE_1_M, TYPE_1_F, TYPE_1, TYPE_2_M, TYPE_2_F, TYPE_2, TYPE_3_M, TYPE_3_F, TYPE_3, TYPE_4_M, TYPE_4_F, TYPE_4, TYPE_5_M, TYPE_5_F, TYPE_5, TYPE_T_M, TYPE_T_F, TYPE_T
+              from (select COMM_CODE, COMM_VALUE, COMM_SORT from TB_COMMON_CODE where COMM_TYPE = 'COUNTY' union all select 'TOTAL', '合計', 99 ) comm
+              left join (
+                select mas.COUNTY_ID,
+                       count(case when det.STU_CATEGORY = '1' and det.STU_SEX = 'M' then 1 else null end) TYPE_1_M,
+                       count(case when det.STU_CATEGORY = '1' and det.STU_SEX = 'F' then 1 else null end) TYPE_1_F,
+                       count(case when det.STU_CATEGORY = '1' then 1 else null end) TYPE_1,
+                       count(case when det.STU_CATEGORY = '2' and det.STU_SEX = 'M' then 1 else null end) TYPE_2_M,
+                       count(case when det.STU_CATEGORY = '2' and det.STU_SEX = 'F' then 1 else null end) TYPE_2_F,
+                       count(case when det.STU_CATEGORY = '2' then 1 else null end) TYPE_2,
+                       count(case when det.STU_CATEGORY = '3' and det.STU_SEX = 'M' then 1 else null end) TYPE_3_M,
+                       count(case when det.STU_CATEGORY = '3' and det.STU_SEX = 'F' then 1 else null end) TYPE_3_F,
+                       count(case when det.STU_CATEGORY = '3' then 1 else null end) TYPE_3,
+                       count(case when det.STU_CATEGORY = '4' and det.STU_SEX = 'M' then 1 else null end) TYPE_4_M,
+                       count(case when det.STU_CATEGORY = '4' and det.STU_SEX = 'F' then 1 else null end) TYPE_4_F,
+                       count(case when det.STU_CATEGORY = '4' then 1 else null end) TYPE_4,
+                       count(case when det.STU_CATEGORY = '5' and det.STU_SEX = 'M' then 1 else null end) TYPE_5_M,
+                       count(case when det.STU_CATEGORY = '5' and det.STU_SEX = 'F' then 1 else null end) TYPE_5_F,
+                       count(case when det.STU_CATEGORY = '5' then 1 else null end) TYPE_5,
+                       count(case when det.STU_SEX = 'M' then 1 else null end) TYPE_T_M,
+                       count(case when det.STU_SEX = 'F' then 1 else null end) TYPE_T_F,
+                       count(det.STU_ID_CORD) TYPE_T
+                  from (select COUNTY_ID, SNO, FILL_YYYY, FILL_MM 
+                          from dbo.TB_SPCF_PERSON_MAS m
+                          join dbo.TB_USER_DATA ud on m.USER_ID = ud.USER_ID) mas
+                  left join dbo.TB_SPCF_PERSON_DET det on det.MAS_SNO = mas.SNO 
+                 where mas.FILL_YYYY = @beginYear and mas.FILL_MM = @beginMonth
+                    #{whereString}
+                 group by mas.COUNTY_ID
+                 union all
+                select 'TOTAL' as COUNTY_ID,
+                       count(case when det.STU_CATEGORY = '1' and det.STU_SEX = 'M' then 1 else null end) TYPE_1_M,
+                       count(case when det.STU_CATEGORY = '1' and det.STU_SEX = 'F' then 1 else null end) TYPE_1_F,
+                       count(case when det.STU_CATEGORY = '1' then 1 else null end) TYPE_1,
+                       count(case when det.STU_CATEGORY = '2' and det.STU_SEX = 'M' then 1 else null end) TYPE_2_M,
+                       count(case when det.STU_CATEGORY = '2' and det.STU_SEX = 'F' then 1 else null end) TYPE_2_F,
+                       count(case when det.STU_CATEGORY = '2' then 1 else null end) TYPE_2,
+                       count(case when det.STU_CATEGORY = '3' and det.STU_SEX = 'M' then 1 else null end) TYPE_3_M,
+                       count(case when det.STU_CATEGORY = '3' and det.STU_SEX = 'F' then 1 else null end) TYPE_3_F,
+                       count(case when det.STU_CATEGORY = '3' then 1 else null end) TYPE_3,
+                       count(case when det.STU_CATEGORY = '4' and det.STU_SEX = 'M' then 1 else null end) TYPE_4_M,
+                       count(case when det.STU_CATEGORY = '4' and det.STU_SEX = 'F' then 1 else null end) TYPE_4_F,
+                       count(case when det.STU_CATEGORY = '4' then 1 else null end) TYPE_4,
+                       count(case when det.STU_CATEGORY = '5' and det.STU_SEX = 'M' then 1 else null end) TYPE_5_M,
+                       count(case when det.STU_CATEGORY = '5' and det.STU_SEX = 'F' then 1 else null end) TYPE_5_F,
+                       count(case when det.STU_CATEGORY = '5' then 1 else null end) TYPE_5,
+                       count(case when det.STU_SEX = 'M' then 1 else null end) TYPE_T_M,
+                       count(case when det.STU_SEX = 'F' then 1 else null end) TYPE_T_F,
+                       count(det.STU_ID_CORD) TYPE_T
+                  from (select COUNTY_ID, SNO, FILL_YYYY, FILL_MM 
+                          from dbo.TB_SPCF_PERSON_MAS m
+                          join dbo.TB_USER_DATA ud on m.USER_ID = ud.USER_ID) mas
+                  left join dbo.TB_SPCF_PERSON_DET det on det.MAS_SNO = mas.SNO 
+                 where mas.FILL_YYYY = @beginYear and mas.FILL_MM = @beginMonth
+                    #{whereString}
+              ) spcf on comm.COMM_CODE = spcf.COUNTY_ID
+             order by comm.COMM_SORT
+        ]]>
+    </select>
+    
+    <select id="undeclaredCount" desc="未填報校數">
+        <![CDATA[
+            select COMM_VALUE, isnull(TOTAL_SCHOOL,0) as TOTAL_SCHOOL, isnull(UNDO_SCHOOL,0) as UNDO_SCHOOL
+              from (select COMM_CODE, COMM_VALUE, COMM_SORT from TB_COMMON_CODE where COMM_TYPE = 'COUNTY' union all select 'TOTAL', '合計', 99) comm
+              left join (select ud.COUNTY_ID, count(ud.USER_ID) as TOTAL_SCHOOL, 
+                                count(case when mas.FILL_STATUS in ('2','3','8') then 1 else null end) as UNDO_SCHOOL
+                           from TB_SPCF_PERSON_MAS mas 
+                           join TB_USER_DATA ud on mas.USER_ID = ud.USER_ID 
+                          where mas.FILL_YYYY = @beginYear and mas.FILL_MM = @beginMonth
+                          #{whereString}
+                          group by ud.COUNTY_ID
+                          union all 
+                         select 'TOTAL' as COUNTY_ID, count(ud.USER_ID) as TOTAL_SCHOOL, 
+                                count(case when mas.FILL_STATUS in ('2','3','8') then 1 else null end) as UNDO_SCHOOL
+                           from TB_SPCF_PERSON_MAS mas 
+                           join TB_USER_DATA ud on mas.USER_ID = ud.USER_ID 
+                          where mas.FILL_YYYY = @beginYear and mas.FILL_MM = @beginMonth
+                          #{whereString}
+                        ) mas on comm.COMM_CODE = mas.COUNTY_ID
+             order by comm.COMM_SORT
+        ]]>
+    </select>
+    <select id="undeclaredList" desc="未填報清單">
+        <![CDATA[
+            select COMM_VALUE, SCHOOL
+              from (select COMM_CODE, COMM_VALUE, COMM_SORT from TB_COMMON_CODE where COMM_TYPE = 'COUNTY') comm
+              left join (select ud.COUNTY_ID, ud.SCHOOL
+                           from TB_USER_DATA ud
+                          where exists (select * from TB_SPCF_PERSON_MAS mas where mas.USER_ID = ud.USER_ID and mas.FILL_YYYY = @beginYear and mas.FILL_MM = @beginMonth and mas.FILL_STATUS in ('2','3','8'))
+                         #{whereString} 
+                        ) mas on comm.COMM_CODE = mas.COUNTY_ID
+             order by comm.COMM_SORT
+        ]]>
+    </select>
+    <select id="spcfPersonList" desc="特定人員清冊">
+        <![CDATA[
+            select ROW_NUMBER() OVER(order by COUNTY_ID, USER_ID, SCHOOL_SYSTEM_SNO) ROW_NO, mas.SCHOOL, 
+                   case det.EDU_DVS when 'D' then '日' when 'N' then '夜' end as EDU_DVS_STR , det.EDU_DEPT, det.STU_NAME, 
+                   case det.STU_SEX when 'M' then '男' when 'F' then '女' end STU_SEX_STR, det.STU_BIRTH_DAY, det.STU_ID_CORD, 
+                   (select substring(COMM_VALUE,1,3) from TB_COMMON_CODE where COMM_TYPE = 'STU_CATE' and COMM_CODE = det.STU_CATEGORY)  as STU_CATE
+              from (select ud.COUNTY_ID, m.SNO, m.FILL_YYYY, m.FILL_MM, ud.SCHOOL, m.USER_ID, ud.SCHOOL_SYSTEM_SNO
+                      from dbo.TB_SPCF_PERSON_MAS m
+                      join dbo.TB_USER_DATA ud on m.USER_ID = ud.USER_ID) mas
+              join dbo.TB_SPCF_PERSON_DET det on det.MAS_SNO = mas.SNO
+             where mas.FILL_YYYY = @beginYear and mas.FILL_MM = @beginMonth
+                #{whereString}
+        ]]>
+    </select>
+</SqlMap>

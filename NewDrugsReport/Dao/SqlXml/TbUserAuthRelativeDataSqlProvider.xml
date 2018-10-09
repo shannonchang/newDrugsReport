@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="TbUserAuthRelativeDataSqlProvider">
+  <column id="tableColumn1">
+    ud.USER_ID, ud.SCHOOL, ud.COUNTY_ID, ud.SCHOOL_SYSTEM_SNO
+  </column>
+  <select id="selectTableUserAuth1" desc="未選學校列表">
+    <![CDATA[        
+			    select #{tableColumn1} from TB_USER_DATA ud
+            where  not exists (
+              select * from TB_USER_AUTH_RELATIVE uar
+                where ud.USER_ID = uar.RELATIVE_USER_ID
+                and uar.USER_ID = @user_id
+           )
+           and SCHOOL_TYPE <> 4 
+           #{whereString}
+        ]]>
+  </select>
+  <column id="tableColumn2">
+    uar.USER_ID, uar.RELATIVE_USER_ID, uar.NODE,(select SCHOOL from TB_USER_DATA ud where ud.USER_ID = uar.RELATIVE_USER_ID) as SCHOOL
+  </column>
+  <select id="selectTableUserAuth2" desc="已選學校列表">
+    <![CDATA[        
+        select #{tableColumn2} from TB_USER_AUTH_RELATIVE uar
+          where uar.USER_ID = @user_id 
+    ]]>
+  </select>
+  <insert id="insertTableUserAuth">
+    <![CDATA[
+      if not exists(select * from TB_USER_AUTH_RELATIVE where RELATIVE_USER_ID = @RELATIVE_USER_ID and USER_ID = @USER_ID )
+      begin
+          insert into TB_USER_AUTH_RELATIVE (USER_ID, RELATIVE_USER_ID, NODE ,CR_IP, CR_DATE, CR_USER , UP_DATE, UP_USER , UP_IP)values (@USER_ID,@RELATIVE_USER_ID,@NODE,@CR_IP, GETDATE(), @CR_USER, GETDATE(),@CR_USER,@CR_IP)  
+      end
+    ]]>
+  </insert>
+  <delete id="deleteTableUserAuth">
+    <![CDATA[
+      delete TB_USER_AUTH_RELATIVE where RELATIVE_USER_ID = @RELATIVE_USER_ID and USER_ID = @USER_ID
+    ]]>
+  </delete>
+</SqlMap>

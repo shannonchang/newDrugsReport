@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<SqlMap name="TbDrugDataSqlProvider">
+  <column id="tableColumn">
+    DRUGS_SNO,TB_COMMON_CODE.COMM_VALUE , DRUGS_LEVEL,DRUGS_NAME,DRUGS_CODE,CR_DATE
+  </column>
+  <select id="selectTableDrugList">
+    <![CDATA[
+          select 
+            ROW_NUMBER() over (order by CR_DATE desc ) as rowId
+          , #{tableColumn} from TB_DRUGS  
+            left join 
+          TB_COMMON_CODE  
+          on TB_DRUGS.DRUGS_LEVEL = TB_COMMON_CODE.COMM_CODE and TB_COMMON_CODE.COMM_TYPE= 'DGLV'
+          #{whereString} 
+        ]]>
+  </select>
+  <select id="selectTableDrugsCodeCheck">
+    <![CDATA[
+        select DRUGS_CODE from TB_DRUGS where DRUGS_CODE = @DRUGS_CODE
+    ]]>
+  </select>
+   <insert id="insertTableDrug">
+    <![CDATA[
+          INSERT INTO TB_DRUGS (DRUGS_LEVEL, DRUGS_NAME, DRUGS_CODE, DRUGS_VALUE, CR_DATE) 
+          VALUES (@DRUGS_LEVEL, @DRUGS_NAME, @DRUGS_CODE, (select max(DRUGS_VALUE)+1 from TB_DRUGS where DRUGS_LEVEL = @DRUGS_LEVEL), getDATE());
+        ]]>
+  </insert>
+  <update id="updateTableDrug">
+    <![CDATA[
+          update TB_DRUGS set DRUGS_CODE = @DRUGS_CODE , CR_DATE = getdate(), DRUGS_LEVEL = @DRUGS_LEVEL , DRUGS_NAME = @DRUGS_NAME where DRUGS_SNO = @DRUGS_SNO
+        ]]>
+  </update>
+  <delete id="deleteTableDrug">
+    <![CDATA[
+          delete TB_DRUGS where DRUGS_SNO = @DRUGS_SNO
+        ]]>   
+  </delete>
+</SqlMap>

@@ -1,0 +1,72 @@
+﻿@functions{
+    public static string formatMbr(dynamic mbrArr){
+        int idx = 0;
+        string result = "";
+        foreach(var mbr in mbrArr){
+            result += mbr.userName;
+            if(idx < mbrArr.Count -1){
+                result += "、";
+            }
+            idx++;
+        }
+        return result;
+    }
+    public static string formatMbrId(dynamic mbrArr){
+        int idx = 0;
+        string result = "";
+        foreach(var mbr in mbrArr){
+            result += mbr.userAccount;
+            if(idx < mbrArr.Count -1){
+                result += ",";
+            }
+            idx++;
+        }
+        return result;
+    }
+
+    public static bool isExistsArray(dynamic arr, dynamic validVal){
+        bool result = false;
+        foreach(var val in arr){
+            if(val == validVal){
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    public static string jsonGetValue(string jsonString, string key){
+        string result = "";
+        if(!string.IsNullOrEmpty(jsonString)){
+            Dictionary<string, string> json = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString);
+            if(json.ContainsKey(key)){
+                result = json[key];
+            }
+        }
+        return result;
+    }
+
+    public static string toTwDateTime(string strDate){
+        DateTime dateTime = DateTime.ParseExact(strDate, "yyyy/MM/dd HH:mm", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces);
+        System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("zh-TW");
+        culture.DateTimeFormat.Calendar = new System.Globalization.TaiwanCalendar();
+        return dateTime.ToString("yyy/MM/dd HH:mm", culture);
+    }
+    public static string toTwDate(string strDate){
+        DateTime dateTime = DateTime.ParseExact(strDate, "yyyy/MM/dd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces);
+        System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("zh-TW");
+        culture.DateTimeFormat.Calendar = new System.Globalization.TaiwanCalendar();
+        return dateTime.ToString("yyy/MM/dd", culture);
+    }
+    public static string toYuanDate(string strDate){
+        System.Globalization.CultureInfo tc = new System.Globalization.CultureInfo("zh-TW");
+        tc.DateTimeFormat.Calendar = new System.Globalization.TaiwanCalendar();
+        DateTime dateTime = DateTime.Parse(strDate, tc);
+        return dateTime.ToString("yyyy/MM/dd");
+    }
+    public static string toYuanDateTime(string strDate){
+        System.Globalization.CultureInfo tc = new System.Globalization.CultureInfo("zh-TW");
+        tc.DateTimeFormat.Calendar = new System.Globalization.TaiwanCalendar();
+        DateTime dateTime = DateTime.Parse(strDate, tc);
+        return dateTime.ToString("yyyy/MM/dd HH:mm");
+    }
+}

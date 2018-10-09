@@ -1,0 +1,36 @@
+﻿<script>
+$(function(){
+    $("[id=newsLinkBtn]").click(function(){
+        linkSubmit($(this).data("href"),{"sno":$(this).data("sno")});
+    });
+});
+</script>
+<div class="boxbg">
+    <aside>
+        <img src="@Url.Content("~/Scripts/images/ListMenubg.png")" alt="" />
+    </aside>
+    <!--表格列表--->
+    <div class="table-date table-dateA">
+        <table border="0" style="width:100%;">
+            <tbody>
+                @foreach (var items in ViewBag.newsList)
+                {
+                    <tr>
+                        <td style="vertical-align:bottom; width:10%;">@items.BEGIN_DATE_TW_STR</td>
+                        <td style="text-align:left; word-wrap:break-word;word-break:break-all; ">
+                            <a id="newsLinkBtn" class="btn-link" data-href="@Url.Action("news_info","NewsData")" data-sno="@items.SNO">@items.TITLE</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td></td>
+                    <td style="text-align: right;">
+                        <a id="linkBtn" class="btn-link" data-href="@Url.Action("newsViewlist","NewsData")">More...</a>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>

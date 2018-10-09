@@ -1,0 +1,312 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>@ViewBag.Title</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="PRAGMA" content="NO-CACHE">
+<meta http-equiv="EXPIRES" content="0">
+<meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+<link rel="Shortcut Icon" type="image/x-icon" href="@Url.Content("~/Scripts/images/favicon.ico")" />
+<link rel="stylesheet" href="@Url.Content("~/Scripts/css/bootstrap/bootstrap.min.css")" type="text/css"/>
+<link rel="stylesheet" href="@Url.Content("~/Scripts/css/bootstrap-datepicker/bootstrap-datepicker3.css")" type="text/css"/>
+<link rel="stylesheet" href="@Url.Content("~/Scripts/css/style.css?v=1.1")" type="text/css"/>
+<link rel="stylesheet" href="@Url.Content("~/Scripts/css/layout.css?v=1.1")" type="text/css"/>
+<link rel="stylesheet" href="@Url.Content("~/Scripts/css/main.css?v=1.1")" type="text/css"/>
+<link rel="stylesheet" href="@Url.Content("~/Scripts/css/rwd.css?v=1.1")" type="text/css"/>
+<script src="@Url.Content("~/Scripts/js/jquery-3.2.1.min.js")"></script>
+<script src="@Url.Content("~/Scripts/js/bootstrap/bootstrap.min.js")"></script>
+<script src="@Url.Content("~/Scripts/js/bootstrap-datepicker/bootstrap-datepicker.js")"></script>
+<script src="@Url.Content("~/Scripts/js/bootstrap-datepicker/locales/bootstrap-datepicker.zh-TW.min.js")"></script>
+<script src="@Url.Content("~/Scripts/js/bootbox/bootbox.min.js")"></script>
+<script src="@Url.Content("~/Scripts/js/jquery-numeric.js")"></script>
+<script src="@Url.Content("~/Scripts/js/jquery-dateFormat.js")"></script>
+<script src="@Url.Content("~/Scripts/js/commonUtils.js?v=1.1")"></script>
+<script src="@Url.Content("~/Scripts/js/url.min.js")"></script>
+<script src="@Url.Content("~/Scripts/js/animate.js")"></script>
+<script>
+var storage = window.sessionStorage;
+$(function(){
+    $.ajaxSetup({
+        "headers":{"token":storage.getItem('drugsToken')},
+        "type": "post"
+    });
+        
+    lightbox();
+    if(storage.getItem('drugsToken') !== null && storage.getItem('drugsToken') !== "undefined"){
+        doAjaxProcess("@Url.Action("gainUserInfo","Login")", "", function(result){
+            $('#lusername').text(result.loginName);
+            if(result.status == "success"){
+                if(result.loginMsg){
+                    $("#loginMsg").empty();
+                    $("#loginMsg").append($("<img>").attr({"src":"@Url.Content("~/Scripts/images/wh1200.png")"}).css({"width":"20px", "height":"20px"})).append(result.loginMsg);
+                }
+
+                getAuthMune();
+                //auth_settings();
+            }else if(result.status == "error"){
+                storage.removeItem("drugsToken");
+                $('.lightbox').show();
+            }
+        }, {
+            codeFunction:{
+                400:function(){
+                    console.log("Http Status 400");
+                    bootbox.alert("逾時操作，請重新登入", function(){
+                        window.sessionStorage.removeItem("drugsToken");
+                        $('.lightbox').show();
+                    });
+                }
+            }
+        });
+    }else{
+        $('.lightbox').show();
+        $(".wrapperbg").addClass("blur");
+    }
+ 
+    $('#logout').on('click', function () {
+        storage.removeItem("drugsToken");
+        window.location.href = '@Url.Action("Index","Login")';
+    });
+
+    $("#assignPwdBtn").click(function(){
+        doAjaxLoadPage("@Url.Action("popForgetPwd","PopupWindow")", "", function(result){
+            var dialog = bootbox.dialog({
+                message: result
+            });
+            dialog.init(function(){
+                $(".modal-content").css({"background": "#024257", "color":"#000;"});
+                var errMsg = "";
+                if(!$(dialog).find("#account").val()){
+                    errMsg += "請輸入您的帳號";
+                }
+                if(!$(dialog).find("#email").val()){
+                    errMsg += "請輸入E-Mail";
+                }
+                /*if(!$(dialog).find('#captchaToken').val()){
+                    $(dialog).find('#span_CheckNumber').html("請確認是否為機器人");
+                }*/
+
+                $(dialog).find("#popSendBtn").click(function(){
+                    $.blockUi();
+                    doAjaxProcess("@Url.Action("assignNewPwd","Login")",JSON.stringify({"account":$(dialog).find("#account").val(), "eMail":$(dialog).find("#email").val()}), function(result){
+                        $.unblockUi();
+                        bootbox.alert(result.msg, function(){
+                            dialog.modal('hide');
+                        });
+                    });
+                });
+            });
+        });
+    });
+    $("#sampleVideo").click(function(){
+        var dialog = bootbox.dialog({
+            message: $("<video>").attr({"type":"video/mp4", "autobuffer":true, "autoplay":"autoplay", "controls":"controls", "src":"@Url.Action("sampleVideo","Login", new{fileName="loginSample.mp4"})"}).css({"width":"100%","height":"100%"}),
+            size:"large"
+        });
+        dialog.init(function(){
+            
+        });
+    });
+});
+function linkSubmit(url, param){
+    $("#actionForm").empty();
+    var $form = $("<form>").attr({"action":url,"method":"post"});
+    $form.append($("<input>").attr({"id":"token","name":"token", "type":"hidden"}).val(storage.getItem('drugsToken')));
+    if(!$.isEmptyObject(param)){
+        $.each(param, function(key, value){
+            $form.append($("<input>").attr({"type":"hidden", "name":key}).val(value));
+        });
+    }
+    $("#actionForm").append($form);
+    $form.submit();
+}
+function lightbox(){
+    $('.lightbox article .sign_btn').click(function(){
+        signIn();
+    });
+    $('.lightbox article').keydown(function(e){
+        if(e.which == 13){
+            signIn();
+        }
+    });
+}
+function signIn(){
+    if(!$("#accountId").val()){
+        bootbox.alert("請輸入帳號");
+        return;
+    }
+    if(!$("#accountPwd").val()){
+        bootbox.alert("請輸入密碼");
+        return;
+    }
+    doAjaxProcess('@Url.Action("login", "Login")', JSON.stringify({ "userId": $("#accountId").val(), "userPwd": $("#accountPwd").val() }), function (result) {
+        if (result.status === "success" || result.status === "warn") {
+            $('.lightbox').hide();
+            $('.wrapperbg.blur').removeClass('blur');
+            storage.setItem('drugsToken', result.token);
+            storage.setItem('auth', result.auth);
+            $('#lusername').text(result.loginName);
+            if(result.loginMsg){
+                $("#loginMsg").empty();
+                $("#loginMsg").append($("<img>").attr({"src":"@Url.Content("~/Scripts/images/wh1200.png")"}).css({"width":"20px", "height":"20px"})).append(result.loginMsg);
+            }
+            $.ajaxSetup({
+                "headers":{"token":storage.getItem('drugsToken')},
+                "type": "post"
+            });
+            var msgBox = $("<div>").css({"width":"100%", "text-align":"center"});
+            msgBox.append("登入成功").append($("<br>")).append($("<a>").attr({"id":"downloadExample", "data-href":"@Url.Action("sampleFileDownload","Login", new{fileName="106年藥物追蹤輔導系統_春暉承辦人操作手冊_v1.pdf"})"}).addClass("btn-link").text("春暉承辦人操作手冊"))
+            .append($("<br>")).append($("<a>").attr({"id":"downloadExample", "data-href":"@Url.Action("sampleFileDownload","Login", new{fileName="106年藥物追蹤輔導系統_輔導人員操作手冊_v1.pdf"})"}).addClass("btn-link").text("輔導人員操作手冊"));
+
+            bootbox.alert({
+                size: "small",
+                message: msgBox,
+                callback:function(){
+                    if(result.status === "warn"){
+                        if(result.loginType !== 4){
+                            linkSubmit("@Url.Action("school_user_edit", "SchoolData")", { "account": $("#accountId").val() });
+                        }
+                    }else{
+                        getAuthMune();
+                    }
+                }
+            });
+            $("[id=downloadExample]").click(function(){
+                window.location.href = $(this).data("href");
+            });
+        } else {
+            bootbox.alert(result.msg);
+        }
+    });
+}
+
+function getAuthMune(){
+    doAjaxLoadPage("@Url.Action("authPage","Login")", {isHome:"@ViewBag.isHome"}, function(result){
+        $(".TabMenu, #main_ul").html(result);
+        $("#main_ul li").css({"width":Math.floor((100 / $("#main_ul li").length)*100)/100 +"%"});
+        $("[id=linkBtn]").click(function(param){
+            linkSubmit($(this).data("href"));
+        });
+    });
+}
+function checkRefresh() {
+    //alert(document.URL.indexOf('?grid-page='));
+    if (document.URL.indexOf('?grid-page=') != -1) {
+        //alert('test');
+    }
+}
+</script>
+</head>
+<body style="background-color:#fde7b8;position:relative" >
+<input type="hidden" id="indexPath" value="@Url.Action("Index","Login")"/>
+    <!--登入黑箱    -->
+    <section class="lightbox" style="display:none;">
+        <article class="sign_in">
+            <h3 style="margin-bottom: 15px; margin-top:15px;"><img src="@Url.Content("~/Scripts/images/login.png?v=1.0")" alt="" style="width:90%; height:90%;"/></h3>
+            <p>
+                <b><img src="@Url.Content("~/Scripts/images/email.png")" alt="" /></b>
+                <input type="text" id="accountId" placeholder="請輸入用戶名">
+            </p>
+            <p>
+                <b><img src="@Url.Content("~/Scripts/images/locked.png")" alt="" /></b>
+                <input type="password" id="accountPwd" placeholder="請輸入密碼">
+            </p>
+            <a class="btn sign_btn">登入</a>
+            <a style="text-decoration: underline; font-size:18px; display: inline-block; width: 32%;" class="btn-link" id="assignPwdBtn" >忘記密碼?</a>
+            <a style="text-decoration: underline; font-size:18px; display: inline-block; width: 32%;" class="btn-link" id="sampleVideo" >教學影片</a>
+            <a style="text-decoration: underline; font-size:18px; text-align:right; display: inline-block; width: 32%; color:#fdc015;" 
+               class="btn-link" href="http://snc.moe.edu.tw/CsrcDrugs/">舊系統</a>
+            <p style="padding-top:15px; color: #e1fcf8; font-size: 14px">
+                系統問題諮詢：( 02 )5573-0706<br/>
+                系統操作服務信箱：<a href="mailto:service@cityinfo.com.tw">service@cityinfo.com.tw</a><br/>
+                教育部聯絡電話：( 02 )7736-7930、7736-7921<br/>
+                <span>
+                    <img src="@Url.Content("~/Scripts/images/chrome-icon.png")" width="15px"/>
+                    Google Chrome 55、
+                    <img src="@Url.Content("~/Scripts/images/firefox-icon.png")" width="15px"/>
+                    Firefox 49、<br/>
+                    <img src="@Url.Content("~/Scripts/images/ie-icon.png")" width="15px"/> Internet Explorer10.0以上版本<br/>
+                    瀏覽器及解析度1024*768
+                </span>
+            </p>
+        </article>
+    </section>
+        
+    <section class="@(ViewBag.isHome == "Y" ? "wrapperbg wrapperbg3":"wrapperbg wrapperbg2")"
+             style="width:100%;height:350px;position:absolute;">
+        @*Ting I 新增style*@
+        <header>
+            <h1 style="position:absolute;padding-left:65px">
+                <a href="@Url.Action("Index","Login")">
+                    <img src="@Url.Content("~/Scripts/images/logo.png?v=1.0")" alt="" />
+                </a>
+            </h1>
+            @*Ting I 註解以下程式碼 (原因：IE瀏覽器 會看不到"登出系統"字樣，並且功能失效，可能是被<b>蓋掉)*@
+            @*<p class="sign_in-btn active">
+                    登入使用者：<b>未登入 </b>
+                <span id="lusername"></span>
+                <a href="#">
+                    <b>登入系統</b>
+                    <span id="logout">登出系統</span>
+                </a>
+            </p>*@
+            <p class="sign_in-btn active">
+                    登入使用者：<b>未登入 </b>
+                <label id="lusername"></label><!--原本為span，但由於IE會無法顯示，因此改為label-->
+                <a href="#" id="logout">
+                    登出系統
+                </a>
+            </p>
+            <section class="block"></section>
+            @*移到外面*@
+        </header>
+        @if(ViewBag.isHome == "Y"){
+            <section class="TabForm">
+                <div class="container">
+                    <p id="loginMsg"></p>
+                    <!--<img src="" width="20" height="20">
+                    <text>今日通報筆數共 10 筆，大專 4 筆、高中 1 筆、高職 1 筆、國中 2 筆、國小 2 筆。</text>--><br> 
+                    <!--<img src="@Url.Content("~/Scripts/images/wh1200.png")" width="20" height="20">
+                    <text>仍有三件個案未填寫身分證字號，通報序號分別為：1112014、1112019、1112205，請盡速至學生基本資料做填寫謝謝。</text>-->
+                    <ul class="inlineBlock TabMenu">
+                    </ul>
+
+                    @RenderBody()
+                </div>
+            </section>
+        }else{
+            <section class="Formmenu">
+                @*Ting I 新增style*@
+                <div class="container">
+                    <ul class="inlineBlock list" id="main_ul">
+                    </ul>
+                    <div class="content">
+                        @RenderBody()
+                    </div>
+                </div>
+            </section>
+        }
+        <div id="actionForm" style="display:none;"></div>
+        <footer>
+            <div class="container-fluid">
+                <p>
+                    校安中心地址：(100-50)台北市忠孝東路1段172號5樓
+                    <span>系統問題諮詢：( 02 )5573-0706</span>
+                    <span>系統操作服務信箱：<a href="mailto:service@cityinfo.com.tw">service@cityinfo.com.tw</a></span>
+                    <span>教育部聯絡電話：( 02 )7736-7930、7736-7921</span>
+                </p>
+                <p>建議使用
+                    <img src="@Url.Content("~/Scripts/images/chrome-icon.png")" width="15px"/>
+                    Google Chrome 55、
+                    <img src="@Url.Content("~/Scripts/images/firefox-icon.png")" width="15px"/>
+                    Firefox 49、
+                    <img src="@Url.Content("~/Scripts/images/ie-icon.png")" width="15px"/> 
+                    Internet Explorer10.0以上版本，瀏覽器及解析度1024*768</p>
+            </div>
+        </footer>
+    </section>
+</body>
+</html>
+

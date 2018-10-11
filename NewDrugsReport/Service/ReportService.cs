@@ -167,7 +167,10 @@ namespace NewDrugs.Service
             return list;
         }
 
-        public List<dynamic> GetTbCHGroups()
+        /*20181011 Frank
+        查詢審查表
+             */
+        public List<dynamic> GetMeetingNote()
         {
             List<dynamic> list = new List<dynamic>();
             using (SqlConnection dbConn = new SqlConnection(DbConnection.connString))
@@ -185,6 +188,27 @@ namespace NewDrugs.Service
             }
             return list;
         }
-        
+
+        /*20181011 Frank
+        查詢各縣市獎勵推薦
+             */
+        public List<dynamic> GetCitySpcReward(string beginYear, string beginMonth, string endYear, string endMonth, string loginType, string userId)
+        {
+            List<dynamic> list = new List<dynamic>();
+            using (SqlConnection dbConn = new SqlConnection(DbConnection.connString))
+            {
+                try
+                {
+                    dbConn.Open();
+                    dao.dbConn = dbConn;
+                    list = dao.QryCityRewardsList(beginYear, beginMonth, endYear, endMonth, loginType, userId);
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e, e.Message);
+                }
+            }
+            return list;
+        }
     }
 }

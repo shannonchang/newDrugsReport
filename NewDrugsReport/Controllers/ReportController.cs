@@ -245,7 +245,7 @@ namespace NewDrugsReport.Controllers
                         xlsxRow.GetCell(0).SetCellValue(reportName);
                         ICellStyle sampleStyle = xlsx.CreateCellStyle();
                         sampleStyle.BorderDiagonalLineStyle = BorderStyle.Thin;
-                        dataList = service.GetTbCHGroups();//test by Frank
+                        dataList = service.GetCitySpcReward(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());//test by Frank
                         //dataList = service.getPeopleAmountByDrugsLv(beginYear, endYear, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
                         sampleStyle.BorderTop = BorderStyle.Thin;
                         sampleStyle.BorderBottom = BorderStyle.Thin;
@@ -278,6 +278,10 @@ namespace NewDrugsReport.Controllers
                     Dictionary<string, object> map = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(row));
                     int cellI = 0;
                     foreach (string key in map.Keys.ToList()){
+                        if(map[key] is null)//20181011 Frank避免null exception
+                        {
+                            map[key] = "";
+                        }
                         if (this.IsNumber(map[key])){
                             createCell(xlsxRow, cellI, CellType.Numeric, Int32.Parse(map[key].ToString()), sampleStyle);
                         }else{

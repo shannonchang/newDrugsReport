@@ -479,4 +479,26 @@
                 #{whereString}
         ]]>
     </select>
+    <select id="spcRewardList" desc="獎勵推薦資料">
+        <![CDATA[
+            select ROW_NUMBER() OVER(order by C.USER_ID) ROW_NO, D.SCHOOL, E.ACCOUNT_NAME, E.TITLE, E.SOLDIER_RANK,E.SOLDIER_ID, E.SOLDIER_TYPE, C.* from TB_USER_DATA D, TB_USER_ACCOUNT E, (select A.USER_ID, A.USER_ACCOUNT, A.MBR_TYPE,B.STU_NAME,B.EDU_LEVEL from TB_CH_GROUP A, TB_STU_BASIC_DATA B where A.NOTICE_SNO = B.NOTICE_SNO
+            AND A.NOTICE_SNO in (select TB_MEETING_INFO.NOTICE_SNO
+            from TB_MEETING_INFO where TB_MEETING_INFO.COUNSELING_RESULT = 1))C where D.USER_ID = C.USER_ID and E.ACCOUNT = C.USER_ACCOUNT;
+        ]]>
+    </select>
+    <select id="spcCityRewardList" desc="縣市推薦資料">
+        <![CDATA[
+            select ROW_NUMBER() OVER(order by C.USER_ID) ROW_NO, D.CITY, D.SCHOOL, E.SOLDIER_ID, E.SOLDIER_TYPE, E.SOLDIER_RANK, E.TITLE,
+            E.ACCOUNT_NAME, C.NOTICE_SNO, C.STU_NAME, C.STU_ID_NO, C.EDU_LEVEL from TB_USER_DATA D, TB_USER_ACCOUNT E, 
+            (select A.USER_ID, A.USER_ACCOUNT, A.NOTICE_SNO, B.STU_NAME, B.STU_ID_NO, B.EDU_LEVEL from TB_CH_GROUP A, TB_STU_BASIC_DATA B where A.NOTICE_SNO = B.NOTICE_SNO
+            AND A.NOTICE_SNO in (select TB_MEETING_INFO.NOTICE_SNO
+            from TB_MEETING_INFO where TB_MEETING_INFO.COUNSELING_RESULT = 1 and TB_MEETING_INFO.MEETING_TIME > CONVERT(DATETIME, @beginDate) AND TB_MEETING_INFO.MEETING_TIME > CONVERT(DATETIME, @endDate)))C 
+            where D.USER_ID = C.USER_ID and E.ACCOUNT = C.USER_ACCOUNT;
+        ]]>
+    </select>
+    <select id="spcRewardList" desc="個案推薦表">
+        <![CDATA[
+            select WRITY_COMPLET, NOTICE_SNO, count(*) from TB_COUNSELING_RECORD group by WRITY_COMPLET, NOTICE_SNO;
+        ]]>
+    </select>
 </SqlMap>

@@ -210,5 +210,27 @@ namespace NewDrugs.Service
             }
             return list;
         }
+
+        /*20181011 Frank
+        查詢獎勵推薦
+             */
+        public List<dynamic> GetSpcReward(string beginYear, string beginMonth, string endYear, string endMonth, string loginType, string userId)
+        {
+            List<dynamic> list = new List<dynamic>();
+            using (SqlConnection dbConn = new SqlConnection(DbConnection.connString))
+            {
+                try
+                {
+                    dbConn.Open();
+                    dao.dbConn = dbConn;
+                    list = dao.QryRewardsList(beginYear, beginMonth, endYear, endMonth, loginType, userId);
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e, e.Message);
+                }
+            }
+            return list;
+        }
     }
 }

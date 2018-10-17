@@ -240,7 +240,7 @@ namespace NewDrugsReport.Controllers
                         IWorkbook xlsx = new XSSFWorkbook(iStream);
                         ISheet sheet = xlsx.GetSheetAt(0);
                         IRow xlsxRow = sheet.GetRow(0);
-                        reportName = "各縣市薦報表";
+                        //reportName = "各縣市薦報表";
                         reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年~" + (Int32.Parse(endYear) - 1911).ToString() + "年_" + reportName;
                         xlsxRow.GetCell(0).SetCellValue(reportName);
                         ICellStyle sampleStyle = xlsx.CreateCellStyle();

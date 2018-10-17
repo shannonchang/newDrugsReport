@@ -499,7 +499,7 @@
             where D.USER_ID = C.USER_ID and E.ACCOUNT = C.USER_ACCOUNT;
         ]]>
     </select>
-    <select id="spcRewardList" desc="個案推薦表">
+    <select id="spcItemList" desc="個案推薦表">
         <![CDATA[
             select A.*,B.*,C.* from (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME, MEETING_RECORD, IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'ACT') A,
             (select WRITY_COMPLET, NOTICE_SNO, IS_INSPECT, count(*) as count from TB_COUNSELING_RECORD

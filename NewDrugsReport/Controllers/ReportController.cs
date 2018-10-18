@@ -222,13 +222,14 @@ namespace NewDrugsReport.Controllers
                         sampleStyle.BorderRight = BorderStyle.Thin;
                         sampleStyle.BorderLeft = BorderStyle.Thin;
                         reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年" + beginMonth + "月_" + reportName;
-                        //未填校數統計
-                        //dataList = service.getUndeclaredCount(beginYear, beginMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
+                        //統計表
+                        List<SpcItem> spcItemList = new List<SpcItem>();
+                        spcItemList = service.GetSpcItem(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
                         //generatorXlsx(sheet, sampleStyle, "", 1, dataList);
-                        //未填校數清單
+                        //推薦表
                         sheet = xlsx.GetSheetAt(1);
                         dataList = service.GetSpcReward(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());//test by Frank
-                        generatorXlsx(sheet, sampleStyle, "", 4, dataList);
+                        generatorXlsx(sheet, sampleStyle, "", 3, dataList);
                         xlsx.Write(ms);
                     }
                 }

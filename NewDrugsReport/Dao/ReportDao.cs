@@ -456,5 +456,22 @@ namespace NewDrugs.Dao
             var resultList = QueryTableListBySql(sql, new { beginDate = beginDate, endDate = endDate, USER_ID = loginUser });
             return resultList;
         }
+
+        /*20181011 Frank
+         * 統計表
+         */
+        public List<dynamic> QrySpcItemList(string beginYear, string beginMonth, string endYear, string endMonth, string loginType, string loginUser)
+        {
+            StringBuilder whereString = new StringBuilder();
+            string beginDate = beginYear + "/" + (!string.IsNullOrEmpty(beginMonth) ? beginMonth : "01") + "/01";
+            string endDate = endYear + "/" + (!string.IsNullOrEmpty(endMonth) ? endMonth : "12") + "/01";
+            if (loginType == "3")
+            {
+                whereString.AppendLine(" and dn.USER_ID in (select RELATIVE_USER_ID from user_relative) ");
+            }
+            string sql = getSelectSql("ReportViewSqlProvider", "spcItemList", whereString.ToString());
+            var resultList = QueryTableListBySql(sql, new { beginDate = beginDate, endDate = endDate, USER_ID = loginUser });
+            return resultList;
+        }
     }
 }

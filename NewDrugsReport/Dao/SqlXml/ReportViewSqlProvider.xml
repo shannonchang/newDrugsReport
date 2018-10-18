@@ -501,11 +501,35 @@
     </select>
     <select id="spcItemList" desc="個案推薦表">
         <![CDATA[
-            select A.*,B.*,C.* from (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME, MEETING_RECORD, IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'ACT') A,
-            (select WRITY_COMPLET, NOTICE_SNO, IS_INSPECT, count(*) as count from TB_COUNSELING_RECORD
-            where WRITY_COMPLET = 'Y' group by WRITY_COMPLET, NOTICE_SNO, IS_INSPECT )B,
-            (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME, MEETING_RECORD, IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'CLS') C
-            WHERE A.NOTICE_SNO = B.NOTICE_SNO AND B.NOTICE_SNO = C.NOTICE_SNO  ORDER BY B.NOTICE_SNO;
+              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect,F.MBR_TYPE, G.SCHOOL, H.ACCOUNT_NAME, I.MEETING_TIME as CLS_MEETING_TIME
+              , I.INSPECT_REPORT , I.IS_INVITE as CLS_IS_INVITE , J.CONT_COUNSELING_REASON from
+              (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME as ACT_MEETING_TIME, SETUP_REASON,MEETING_RECORD, IS_INVITE as ACT_IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'ACT') A
+              left join
+              (select WRITY_COMPLET, NOTICE_SNO,  count(*) as count_complet from TB_COUNSELING_RECORD
+              where WRITY_COMPLET = 'Y'  and MEETING_TYPE is null group by WRITY_COMPLET, NOTICE_SNO)B on A.NOTICE_SNO = B.NOTICE_SNO
+			        left join
+			        (select WRITY_COMPLET, NOTICE_SNO, IS_INSPECT, count(*) as count_inspect from TB_COUNSELING_RECORD
+              where WRITY_COMPLET = 'Y' and IS_INSPECT = 'Y' and MEETING_TYPE is null  group by WRITY_COMPLET, NOTICE_SNO, IS_INSPECT )C
+              on B.NOTICE_SNO = C.NOTICE_SNO 
+			        left join
+              (select WRITY_COMPLET, NOTICE_SNO,  count(*) as cont_count_complet from TB_COUNSELING_RECORD
+              where WRITY_COMPLET = 'Y'  and MEETING_TYPE = 'CONT' group by WRITY_COMPLET, NOTICE_SNO)D on A.NOTICE_SNO = D.NOTICE_SNO
+			        left join
+			        (select WRITY_COMPLET, NOTICE_SNO, IS_INSPECT, count(*) as cont_count_inspect from TB_COUNSELING_RECORD
+              where WRITY_COMPLET = 'Y' and IS_INSPECT = 'Y' and MEETING_TYPE = 'CONT' group by WRITY_COMPLET, NOTICE_SNO, IS_INSPECT )E
+              on A.NOTICE_SNO = E.NOTICE_SNO 
+			        left join
+			        TB_CH_GROUP F on A.NOTICE_SNO = F.NOTICE_SNO  
+			        left join 
+			        TB_USER_DATA G on F.USER_ID = G.USER_ID
+					    left join
+					    TB_USER_ACCOUNT H on H.ACCOUNT = F.USER_ACCOUNT
+					    left join
+					    (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME, SETUP_REASON,MEETING_RECORD,INSPECT_REPORT, IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'CLS') I
+							    on I.NOTICE_SNO = A.NOTICE_SNO
+					    left join
+					    (select CONT_COUNSELING_REASON , NOTICE_SNO from TB_MEETING_INFO where MEETING_TYPE = 'CONT')J on J.NOTICE_SNO = A.NOTICE_SNO
+			        ORDER BY A.NOTICE_SNO;
         ]]>
     </select>
 </SqlMap>

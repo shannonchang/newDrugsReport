@@ -127,6 +127,8 @@
     <Compile Include="Dao\UserAuthDataDao.cs" />
     <Compile Include="Dao\UserDataDao.cs" />
     <Compile Include="Dao\CommonDataDao.cs" />
+    <Compile Include="Helper\convertHelper.cs" />
+    <Compile Include="Models\SpcItem.cs" />
     <Compile Include="Service\AddressService.cs" />
     <Compile Include="Service\AuthService.cs" />
     <Compile Include="Service\CommonService.cs" />

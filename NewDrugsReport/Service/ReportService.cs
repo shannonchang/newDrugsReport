@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using NewDrugs.Common;
@@ -240,6 +241,8 @@ namespace NewDrugs.Service
         {
             List<dynamic> list = new List<dynamic>();
             List<SpcItem> dataList = new List<SpcItem>();
+            Hashtable spcHash = new Hashtable();
+            int rowNum = 0;
             using (SqlConnection dbConn = new SqlConnection(DbConnection.connString))
             {
                 try
@@ -250,7 +253,16 @@ namespace NewDrugs.Service
                     foreach(var item in list)
                     {
                         SpcItem bean = new SpcItem();
-                        bean.rowNum = 1;
+                        if(item.NOTICE_SNO != null)
+                        {
+                            if (!spcHash.ContainsKey(item.NOTICE_SNO))
+                            {
+                                spcHash.Add(item.NOTICE_SNO, 1);
+                                rowNum++;
+                            }
+                                
+                        }
+                        bean.rowNum = rowNum;
                         bean.accountName = item.ACCOUNT_NAME;
                         bean.noticeSno = item.NOTICE_SNO;
                         bean.actMeetingTime = item.ACT_MEETING_TIME;

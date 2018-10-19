@@ -12,6 +12,8 @@ using Newtonsoft.Json;
 using NLog;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using NewDrugs.Helper;
+using NPOI.SS.Util;
 
 namespace NewDrugsReport.Controllers
 {
@@ -221,11 +223,33 @@ namespace NewDrugsReport.Controllers
                         sampleStyle.BorderBottom = BorderStyle.Thin;
                         sampleStyle.BorderRight = BorderStyle.Thin;
                         sampleStyle.BorderLeft = BorderStyle.Thin;
+                        sampleStyle.VerticalAlignment = VerticalAlignment.Center;
+                        sampleStyle.Alignment = HorizontalAlignment.Center;
+                        sampleStyle.BorderDiagonal = BorderDiagonal.None;
+                        sampleStyle.BorderDiagonalLineStyle = BorderStyle.None;
+                        // 設定字體
+                        IFont Font = xlsx.CreateFont();   // 產生字體樣式設定
+                        Font.FontName = "標楷體";
+                        Font.FontHeightInPoints = 14;
+
+                        sampleStyle.SetFont(Font);
+
+                        ICellStyle slashStyle = xlsx.CreateCellStyle();
+                        slashStyle.BorderTop = BorderStyle.Thin;
+                        slashStyle.BorderBottom = BorderStyle.Thin;
+                        slashStyle.BorderRight = BorderStyle.Thin;
+                        slashStyle.BorderLeft = BorderStyle.Thin;
+                        slashStyle.VerticalAlignment = VerticalAlignment.Center;
+                        slashStyle.Alignment = HorizontalAlignment.Center;
+                        slashStyle.BorderDiagonal = BorderDiagonal.Backward;
+                        slashStyle.BorderDiagonalLineStyle = BorderStyle.Thin;
+                        slashStyle.SetFont(Font);
+
                         reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年" + beginMonth + "月_" + reportName;
                         //統計表
                         List<SpcItem> spcItemList = new List<SpcItem>();
                         spcItemList = service.GetSpcItem(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
-                        //generatorXlsx(sheet, sampleStyle, "", 1, dataList);
+                        generatorSpcItemXlsx(sheet, sampleStyle, slashStyle, reportName, 3, spcItemList);
                         //推薦表
                         sheet = xlsx.GetSheetAt(1);
                         dataList = service.GetSpcReward(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());//test by Frank
@@ -235,7 +259,6 @@ namespace NewDrugsReport.Controllers
                 }
                 else if (reportType == "L")//各縣市薦報表
                 {
-                    //add by frank
                     using (Stream iStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         IWorkbook xlsx = new XSSFWorkbook(iStream);
@@ -298,6 +321,74 @@ namespace NewDrugsReport.Controllers
             }
         }
 
+        private void generatorSpcItemXlsx(ISheet sheet, ICellStyle sampleStyle, ICellStyle slashStyle, string reportName, int rowI, List<SpcItem> dataList)
+        {
+            MemoryStream ms = new MemoryStream();
+            int currentRow = 0;//同一NOTICE_SNO的一組
+            int totalRow = dataList!=null?dataList[dataList.Count() - 1].rowNum:0;
+            
+            try
+            {
+                for (int i = 23; i < totalRow * 4 + rowI; i++)
+                {
+                    //if (rowI > 22)//第五筆後自行增加列
+                    {
+                        InsertRow(sheet, i);
+
+                    }
+
+                    IRow newRow = sheet.GetRow(i);
+                    if (newRow == null)
+                    {
+                        newRow = sheet.CreateRow(i);
+                    }
+                }
+
+                IRow xlsxRow = sheet.GetRow(0);
+                xlsxRow.GetCell(0).SetCellValue(reportName);
+                foreach (var row in dataList)
+                {
+                    
+                    
+                    Dictionary<string, object> map = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(row));
+                    int cellI = 0;
+                    if (map["rowNum"] != null&&map["title"]!=null&&convertHelper.MbrRowNum(Int32.Parse(map["title"].ToString()))!=0)
+                    {
+                        xlsxRow = sheet.GetRow((Int32.Parse(map["rowNum"].ToString()) - 1) * 4 + convertHelper.MbrRowNum(Int32.Parse(map["title"].ToString()))+rowI-1);//rowNum*4+mbrType列數+起始列數-1(由零起算)
+                        foreach (string key in map.Keys.ToList())
+                        {
+                            if (map[key] is null)//20181011 Frank避免null exception
+                            {
+                                map[key] = "";
+                            }
+
+                            ICellStyle currentStyle = convertHelper.cellStyleHelper(sampleStyle, slashStyle , Int32.Parse(map["title"].ToString()), key);
+                            if (this.IsNumber(map[key]))
+                            {
+                                createCell(xlsxRow, cellI, CellType.Numeric, Int32.Parse(map[key].ToString()), currentStyle);
+                            }
+                            else
+                            {
+                                createCell(xlsxRow, cellI, CellType.String, map[key].ToString(), currentStyle);
+                            }
+                            cellI++;
+                        }
+                        //rowI++;
+                    }
+                }
+                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 0, 0));
+                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 1, 1));
+                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 2, 2));
+                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 6, 6));
+                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 7, 7));
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, e.Message);
+                throw e;
+            }
+        }
+
         private void createCell(IRow xlsxRow, int cellIdx, CellType cellType, dynamic cellValue, ICellStyle style = null){
             ICell cell = xlsxRow.GetCell(cellIdx);
             if(cell == null ){
@@ -308,6 +399,33 @@ namespace NewDrugsReport.Controllers
             }
             cell.SetCellType(cellType);
             cell.SetCellValue(cellValue == null ? "" : cellValue);
+        }
+
+        /*
+         * 插入列
+         */
+        private void InsertRow(ISheet sheet, int insertRow)
+        {
+            try
+            {
+                sheet.ShiftRows(insertRow, sheet.LastRowNum, 1);
+                // 如果要插入的列數是0，複制下方列，反之，複制上方列
+                //sheet.CopyRow((insertRow == 0) ? insertRow + 1 : insertRow - 1, insertRow);
+                // 清空插入列的值
+                /*var row = sheet.GetRow(insertRow);
+                for (int i = 0; i < row.LastCellNum; i++)
+                {
+                    var cell = row.GetCell(i);
+                    if (cell != null)
+                        cell.SetCellValue("");
+                }*/
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, e.Message);
+                throw e;
+            }
+            
         }
     }
 }

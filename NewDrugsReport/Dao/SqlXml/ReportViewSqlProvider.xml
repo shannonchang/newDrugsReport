@@ -501,8 +501,8 @@
     </select>
     <select id="spcItemList" desc="個案推薦表">
         <![CDATA[
-              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect,F.MBR_TYPE, G.SCHOOL, H.ACCOUNT_NAME, I.MEETING_TIME as CLS_MEETING_TIME
-              , I.INSPECT_REPORT , I.IS_INVITE as CLS_IS_INVITE , J.CONT_COUNSELING_REASON from
+              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect,F.MBR_TYPE, G.SCHOOL, H.ACCOUNT_NAME, H.TITLE, I.MEETING_TIME as CLS_MEETING_TIME
+              , I.INSPECT_REPORT , I.IS_INVITE as CLS_IS_INVITE , J.CONT_COUNSELING_REASON, K.EVENT_REPORT_TIME from
               (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME as ACT_MEETING_TIME, SETUP_REASON,MEETING_RECORD, IS_INVITE as ACT_IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'ACT') A
               left join
               (select WRITY_COMPLET, NOTICE_SNO,  count(*) as count_complet from TB_COUNSELING_RECORD
@@ -529,6 +529,7 @@
 							    on I.NOTICE_SNO = A.NOTICE_SNO
 					    left join
 					    (select CONT_COUNSELING_REASON , NOTICE_SNO from TB_MEETING_INFO where MEETING_TYPE = 'CONT')J on J.NOTICE_SNO = A.NOTICE_SNO
+					    left join TB_DRUGS_NOTICE K on A.NOTICE_SNO = K.SNO
 			        ORDER BY A.NOTICE_SNO;
         ]]>
     </select>

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using System.Globalization;
 
 namespace NewDrugs.Helper
 {
@@ -42,28 +43,148 @@ namespace NewDrugs.Helper
             switch (mbrType)
             {
                 case 1:
-                    if (key.Equals("counselingCount"))
+                    if (key.Equals("counselingCount")|| key.Equals("conselingRecord") || key.Equals("isInspect")  )
                         return slashStyle;
                     else
                         return sampleStyle;
                 case 4:
-                    if (key.Equals("actIsInvite"))
+                    if (key.Equals("actIsInvite")|| key.Equals("meeingRecord") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return slashStyle;
                     else
                         return sampleStyle;
                 case 5:
-                    if (key.Equals("actIsInvite"))
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return slashStyle;
                     else
                         return sampleStyle;
                 case 3:
-                    if (key.Equals("actIsInvite"))
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return slashStyle;
                     else
                         return sampleStyle;
                 default:
                     return sampleStyle;
             }
+        }
+
+        public static string cellValueHelper( int mbrType, string key, string Value)
+        {
+
+            switch (mbrType)
+            {
+                case 1:
+                    if (key.Equals("counselingCount") || key.Equals("conselingRecord") || key.Equals("isInspect"))
+                        return "";
+                    else
+                        return Value;
+                case 4:
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                        return "";
+                    else
+                        return Value;
+                case 5:
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                        return "";
+                    else
+                        return Value;
+                case 3:
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                        return "";
+                    else
+                        return Value;
+                default:
+                    return Value;
+            }
+        }
+
+        public static string setupReasonHelper(int reasonNum)
+        {
+            switch (reasonNum)
+            {
+                case 1:
+                    return "經確認檢驗尿液檢體中含有濫用藥物或其他代謝物者";
+                case 2:
+                    return "自我坦承";
+                case 3:
+                    return "遭警查獲";
+                case 4:
+                    return "其他網絡通知涉及違反毒品危害防制條例";
+                case 0:
+                    return "?";
+                default:
+                    return "?";
+            }
+        }
+
+        public static string mbrTypeHelper(int mbrType)
+        {
+            switch (mbrType)
+            {
+                case 1:
+                    return "個案管理人";
+                case 2:
+                    return "生教(輔)組長";
+                case 3:
+                    return "輔導教師";
+                case 4:
+                    return "輔導教官";
+                case 5:
+                    return "班級導師";
+                case 6:
+                    return "其他";
+                case 10:
+                    return "輔導老師(校安)";
+                default:
+                    return "?";
+            }
+        }
+
+        public static string isInviteHelper(string isInvite)
+        {
+            if (isInvite.Equals("Y"))
+            {
+                return "V";
+            }
+            else return "";
+        }
+
+        public static string recordHelper(string record)
+        {
+            if (record != null && record.Length > 0)
+            {
+                return "V";
+            }
+            else return "";
+        }
+
+        public static string inspectRecordHelper(string inspectRecord)
+        {
+            if (inspectRecord != null && inspectRecord.Length > 0)
+            {
+                return "否";
+            }
+            else return "";
+        }
+
+        public static string contCounselingReasonHelper(int contReasonNum)
+        {
+            switch (contReasonNum)
+            {
+                case 1:
+                    return "尿液檢體中仍含有濫用藥物或其他代謝物者";
+                case 2:
+                    return "因個案學生輔到週數未達12週";
+                default:
+                    return "?";
+
+            }
+        }
+
+        public static string timeHelper(DateTime tDate)
+        {
+            TaiwanCalendar twC = new TaiwanCalendar();
+            return twC.GetYear(tDate) +
+                            "." + twC.GetMonth(tDate) + "." + twC.GetDayOfMonth(tDate);
         }
     }
 }

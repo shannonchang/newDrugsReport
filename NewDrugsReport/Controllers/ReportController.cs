@@ -227,10 +227,11 @@ namespace NewDrugsReport.Controllers
                         sampleStyle.Alignment = HorizontalAlignment.Center;
                         sampleStyle.BorderDiagonal = BorderDiagonal.None;
                         sampleStyle.BorderDiagonalLineStyle = BorderStyle.None;
+                        sampleStyle.WrapText = true;
                         // 設定字體
                         IFont Font = xlsx.CreateFont();   // 產生字體樣式設定
                         Font.FontName = "標楷體";
-                        Font.FontHeightInPoints = 14;
+                        Font.FontHeightInPoints = 12;
 
                         sampleStyle.SetFont(Font);
 
@@ -329,7 +330,7 @@ namespace NewDrugsReport.Controllers
             
             try
             {
-                for (int i = 23; i < totalRow * 4 + rowI; i++)
+                for (int i = rowI; i < totalRow * 4 + rowI; i++)
                 {
                     //if (rowI > 22)//第五筆後自行增加列
                     {
@@ -363,24 +364,31 @@ namespace NewDrugsReport.Controllers
                             }
 
                             ICellStyle currentStyle = convertHelper.cellStyleHelper(sampleStyle, slashStyle , Int32.Parse(map["title"].ToString()), key);
-                            if (this.IsNumber(map[key]))
+                            //if (this.IsNumber(map[key]))
                             {
-                                createCell(xlsxRow, cellI, CellType.Numeric, Int32.Parse(map[key].ToString()), currentStyle);
+                                //createCell(xlsxRow, cellI, CellType.Numeric, Int32.Parse(map[key].ToString()), currentStyle);
                             }
-                            else
+                            //else
                             {
-                                createCell(xlsxRow, cellI, CellType.String, map[key].ToString(), currentStyle);
+                                createCell(xlsxRow, cellI, CellType.String, convertHelper.cellValueHelper(Int32.Parse(map["title"].ToString()),key, map[key].ToString()), currentStyle);
                             }
                             cellI++;
                         }
                         //rowI++;
                     }
                 }
-                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 0, 0));
-                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 1, 1));
-                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 2, 2));
-                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 6, 6));
-                sheet.AddMergedRegion(new CellRangeAddress(23, 26, 7, 7));
+                //處理row_num, notice_sno, meeting time合併儲存格
+                for(int i =0; i<totalRow; i++)
+                {
+                    int begin = i * 4 + rowI;
+                    int end = i * 4 + rowI + 3;
+                    sheet.AddMergedRegion(new CellRangeAddress(begin, end, 0, 0));//row num
+                    sheet.AddMergedRegion(new CellRangeAddress(begin, end, 1, 1));//school
+                    sheet.AddMergedRegion(new CellRangeAddress(begin, end, 2, 2));//notice sno
+                    sheet.AddMergedRegion(new CellRangeAddress(begin, end, 6, 6));//metting type
+                    sheet.AddMergedRegion(new CellRangeAddress(begin, end, 7, 7));//meeting time
+                }
+                
             }
             catch (Exception e)
             {

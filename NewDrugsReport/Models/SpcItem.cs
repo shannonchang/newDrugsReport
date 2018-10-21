@@ -10,7 +10,7 @@ namespace NewDrugs.Models
         public int rowNum { get; set; }
         public string school { get; set; }
         public string noticeSno { get; set; }
-        public int? title { get; set; }
+        public int title { get; set; }
         public string accountName { get; set; }
         public string status { get; set; }
         public string setupReason { get; set; }

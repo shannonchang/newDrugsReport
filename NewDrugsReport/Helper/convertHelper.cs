@@ -102,7 +102,7 @@ namespace NewDrugs.Helper
             }
         }
 
-        public static string CellValueHelper( int mbrType, string key, string Value)
+        public static string CellValueHelper( int mbrType, string key, string value)
         {
 
             switch (mbrType)
@@ -110,25 +110,33 @@ namespace NewDrugs.Helper
                 case 1:
                     if (key.Equals("counselingCount") || key.Equals("conselingRecord") || key.Equals("isInspect"))
                         return "";
+                    else if (key.Equals("title"))
+                        return MbrHelper(value);
                     else
-                        return Value;
+                        return value;
                 case 4:
                     if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return "";
+                    else if (key.Equals("title"))
+                        return MbrHelper(value);
                     else
-                        return Value;
+                        return value;
                 case 5:
                     if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return "";
+                    else if (key.Equals("title"))
+                        return MbrHelper(value);
                     else
-                        return Value;
+                        return value;
                 case 3:
                     if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return "";
+                    else if (key.Equals("title"))
+                        return MbrHelper(value);
                     else
-                        return Value;
+                        return value;
                 default:
-                    return Value;
+                    return value;
             }
         }
 
@@ -146,29 +154,6 @@ namespace NewDrugs.Helper
                     return "其他網絡通知涉及違反毒品危害防制條例";
                 case 0:
                     return "?";
-                default:
-                    return "?";
-            }
-        }
-
-        public static string MbrTypeHelper(int mbrType)
-        {
-            switch (mbrType)
-            {
-                case 1:
-                    return "個案管理人";
-                case 2:
-                    return "生教(輔)組長";
-                case 3:
-                    return "輔導教師";
-                case 4:
-                    return "輔導教官";
-                case 5:
-                    return "班級導師";
-                case 6:
-                    return "其他";
-                case 10:
-                    return "輔導老師(校安)";
                 default:
                     return "?";
             }

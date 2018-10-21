@@ -512,8 +512,7 @@
     </select>
     <select id="spcItemList" desc="個案推薦表">
         <![CDATA[
-              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect, F.MBR_TYPE
-			        , G.SCHOOL, H.ACCOUNT_NAME, H.TITLE, I.MEETING_TIME as CLS_MEETING_TIME
+              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect,  I.MEETING_TIME as CLS_MEETING_TIME
               , I.INSPECT_REPORT , I.IS_INVITE as CLS_IS_INVITE , J.CONT_COUNSELING_REASON, K.EVENT_REPORT_TIME from
               (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME as ACT_MEETING_TIME, SETUP_REASON,MEETING_RECORD, IS_INVITE as ACT_IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'ACT') A
               left join
@@ -529,13 +528,7 @@
 			        left join
 			        (select WRITY_COMPLET, NOTICE_SNO, IS_INSPECT, count(*) as cont_count_inspect from TB_COUNSELING_RECORD
               where WRITY_COMPLET = 'Y' and IS_INSPECT = 'Y' and MEETING_TYPE = 'CONT' group by WRITY_COMPLET, NOTICE_SNO, IS_INSPECT )E
-              on A.NOTICE_SNO = E.NOTICE_SNO 
-			        left join
-			        TB_CH_GROUP F on A.NOTICE_SNO = F.NOTICE_SNO  
-			        left join 
-			        TB_USER_DATA G on F.USER_ID = G.USER_ID
-					    left join
-					    TB_USER_ACCOUNT H on H.ACCOUNT = F.USER_ACCOUNT
+              on A.NOTICE_SNO = E.NOTICE_SNO
 					    left join
 					    (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME, SETUP_REASON,MEETING_RECORD,INSPECT_REPORT, IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'CLS') I
 							    on I.NOTICE_SNO = A.NOTICE_SNO
@@ -543,6 +536,18 @@
 					    (select CONT_COUNSELING_REASON , NOTICE_SNO from TB_MEETING_INFO where MEETING_TYPE = 'CONT')J on J.NOTICE_SNO = A.NOTICE_SNO
 					    left join TB_DRUGS_NOTICE K on A.NOTICE_SNO = K.SNO
 			        ORDER BY A.NOTICE_SNO;
+        ]]>
+    </select>
+    <select id="spcPeopleList" desc="個案推薦表學校人員">
+        <![CDATA[
+              select F.NOTICE_SNO, F.MBR_TYPE, G.SCHOOL, H.ACCOUNT_NAME, H.TITLE
+              from
+              TB_CH_GROUP F   
+			        left join 
+			        TB_USER_DATA G on F.USER_ID = G.USER_ID
+					    left join
+					    TB_USER_ACCOUNT H on H.ACCOUNT = F.USER_ACCOUNT
+              where F.NOTICE_SNO
         ]]>
     </select>
 </SqlMap>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using NewDrugs.Base;
@@ -471,6 +472,23 @@ namespace NewDrugs.Dao
             }
             string sql = getSelectSql("ReportViewSqlProvider", "spcItemList", whereString.ToString());
             var resultList = QueryTableListBySql(sql, new { beginDate = beginDate, endDate = endDate, USER_ID = loginUser });
+            return resultList;
+        }
+
+        /*20181021 Frank
+         * 統計表人員
+         */
+        public List<dynamic> QrySpcPeopleList(string snoList, string loginType, string loginUser)
+        {
+            StringBuilder whereString = new StringBuilder();
+            
+            if (loginType == "3")
+            {
+                whereString.AppendLine(" and dn.USER_ID in (select RELATIVE_USER_ID from user_relative) ");
+            }
+            string sql = getSelectSql("ReportViewSqlProvider", "spcPeopleList", whereString.ToString());
+            sql = sql + "in (" + snoList + ");";
+            var resultList = QueryTableListBySql(sql, new { USER_ID = loginUser });
             return resultList;
         }
     }

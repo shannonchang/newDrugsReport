@@ -613,7 +613,9 @@
     <None Include="Scripts\js\ckeditor\plugins\wsc\README.md" />
     <None Include="Scripts\js\ckeditor\skins\.DS_Store" />
     <None Include="Scripts\js\ckeditor\skins\moonocolor\readme.md" />
-    <None Include="Dao\SqlXml\ReportViewSqlProvider.xml" />
+    <None Include="Dao\SqlXml\ReportViewSqlProvider.xml">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Dao\SqlXml\TbCommonDataSqlProvider.xml">
       <SubType>Designer</SubType>
     </None>

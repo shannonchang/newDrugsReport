@@ -9,13 +9,48 @@ namespace NewDrugs.Helper
 {
     public static class convertHelper
     {
-        public static string MbrHelper(int mbrType)
+        public static string TitleHelper(string title)
         {
-            return "個案管理人";
+            string[] titleList = title.Split(',');
+            string retString = "";
+            foreach(string mbr in titleList)
+            {
+                if (retString.Length > 0)
+                {
+                    retString += ",";
+                }
+                retString += MbrHelper(mbr);
+            }
+            return retString;
+        }
+
+        public static string MbrHelper(string mbrType)
+        {
+            switch (mbrType)
+            {
+                case "1":
+                    return "個案管理人";
+                case "2":
+                    return "生教(輔)組長";
+                case "3":
+                    return "輔導教師";
+                case "4":
+                    return "輔導教官";
+                case "5":
+                    return "班級導師";
+                case "6":
+                    return "其他";
+                case "10":
+                    return "輔導老師(校安)";
+                default:
+                    return "?";
+            }
+
+
         }
 
         /*
-         * 審查表依照mbr type寫入不同列
+         * 審查表依照mbr type寫入對應的列數, 回的數字就是列數
          */
         public static int MbrRowNum(int mbrType)
         {
@@ -37,7 +72,7 @@ namespace NewDrugs.Helper
         /*
          * 
          */
-        public static ICellStyle cellStyleHelper(ICellStyle sampleStyle, ICellStyle slashStyle, int mbrType, string key)
+        public static ICellStyle CellStyleHelper(ICellStyle sampleStyle, ICellStyle slashStyle, int mbrType, string key)
         {
             
             switch (mbrType)
@@ -67,7 +102,7 @@ namespace NewDrugs.Helper
             }
         }
 
-        public static string cellValueHelper( int mbrType, string key, string Value)
+        public static string CellValueHelper( int mbrType, string key, string Value)
         {
 
             switch (mbrType)
@@ -97,7 +132,7 @@ namespace NewDrugs.Helper
             }
         }
 
-        public static string setupReasonHelper(int reasonNum)
+        public static string SetupReasonHelper(int reasonNum)
         {
             switch (reasonNum)
             {
@@ -116,7 +151,7 @@ namespace NewDrugs.Helper
             }
         }
 
-        public static string mbrTypeHelper(int mbrType)
+        public static string MbrTypeHelper(int mbrType)
         {
             switch (mbrType)
             {
@@ -139,7 +174,7 @@ namespace NewDrugs.Helper
             }
         }
 
-        public static string isInviteHelper(string isInvite)
+        public static string IsInviteHelper(string isInvite)
         {
             if (isInvite.Equals("Y"))
             {
@@ -148,7 +183,7 @@ namespace NewDrugs.Helper
             else return "";
         }
 
-        public static string recordHelper(string record)
+        public static string RecordHelper(string record)
         {
             if (record != null && record.Length > 0)
             {
@@ -157,7 +192,7 @@ namespace NewDrugs.Helper
             else return "";
         }
 
-        public static string inspectRecordHelper(string inspectRecord)
+        public static string InspectRecordHelper(string inspectRecord)
         {
             if (inspectRecord != null && inspectRecord.Length > 0)
             {
@@ -166,7 +201,7 @@ namespace NewDrugs.Helper
             else return "";
         }
 
-        public static string contCounselingReasonHelper(int contReasonNum)
+        public static string ContCounselingReasonHelper(int contReasonNum)
         {
             switch (contReasonNum)
             {

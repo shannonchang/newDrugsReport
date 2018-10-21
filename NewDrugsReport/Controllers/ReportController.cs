@@ -201,6 +201,7 @@ namespace NewDrugsReport.Controllers
                         sampleStyle.BorderBottom = BorderStyle.Thin;
                         sampleStyle.BorderRight = BorderStyle.Thin;
                         sampleStyle.BorderLeft = BorderStyle.Thin;
+                        
                         reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年" + beginMonth + "月_" + reportName;
                         //未填校數統計
                         dataList = service.getUndeclaredCount(beginYear, beginMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
@@ -246,7 +247,7 @@ namespace NewDrugsReport.Controllers
                         slashStyle.BorderDiagonalLineStyle = BorderStyle.Thin;
                         slashStyle.SetFont(Font);
 
-                        reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年" + beginMonth + "月_" + reportName;
+                        reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年" + beginMonth + "月_" + (Int32.Parse(endYear) - 1911).ToString() + "年" + endMonth +"月_"+ reportName;
                         //統計表
                         List<SpcItem> spcItemList = new List<SpcItem>();
                         spcItemList = service.GetSpcItem(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
@@ -266,7 +267,7 @@ namespace NewDrugsReport.Controllers
                         ISheet sheet = xlsx.GetSheetAt(0);
                         IRow xlsxRow = sheet.GetRow(0);
                         //reportName = "各縣市薦報表";
-                        reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年~" + (Int32.Parse(endYear) - 1911).ToString() + "年_" + reportName;
+                        reportName = (Int32.Parse(beginYear) - 1911).ToString() + "年" + beginMonth + "月_" + (Int32.Parse(endYear) - 1911).ToString() + "年" + endMonth + "月_" + reportName;
                         xlsxRow.GetCell(0).SetCellValue(reportName);
                         ICellStyle sampleStyle = xlsx.CreateCellStyle();
                         sampleStyle.BorderDiagonalLineStyle = BorderStyle.Thin;
@@ -276,6 +277,14 @@ namespace NewDrugsReport.Controllers
                         sampleStyle.BorderBottom = BorderStyle.Thin;
                         sampleStyle.BorderRight = BorderStyle.Thin;
                         sampleStyle.BorderLeft = BorderStyle.Thin;
+                        sampleStyle.VerticalAlignment = VerticalAlignment.Center;
+                        sampleStyle.Alignment = HorizontalAlignment.Center;
+                        // 設定字體
+                        IFont Font = xlsx.CreateFont();   // 產生字體樣式設定
+                        Font.FontName = "標楷體";
+                        Font.FontHeightInPoints = 12;
+
+                        sampleStyle.SetFont(Font);
                         generatorXlsx(sheet, sampleStyle, reportName, 3, dataList);
                         xlsx.Write(ms);
                     }//add by frank
@@ -326,7 +335,7 @@ namespace NewDrugsReport.Controllers
         {
             MemoryStream ms = new MemoryStream();
             int currentRow = 0;//同一NOTICE_SNO的一組
-            int totalRow = dataList!=null?dataList[dataList.Count() - 1].rowNum:0;
+            int totalRow = dataList!=null&&dataList.Count>0?dataList[dataList.Count() - 1].rowNum:0;
             
             try
             {
@@ -363,14 +372,14 @@ namespace NewDrugsReport.Controllers
                                 map[key] = "";
                             }
 
-                            ICellStyle currentStyle = convertHelper.cellStyleHelper(sampleStyle, slashStyle , Int32.Parse(map["title"].ToString()), key);
+                            ICellStyle currentStyle = convertHelper.CellStyleHelper(sampleStyle, slashStyle , Int32.Parse(map["title"].ToString()), key);
                             //if (this.IsNumber(map[key]))
                             {
                                 //createCell(xlsxRow, cellI, CellType.Numeric, Int32.Parse(map[key].ToString()), currentStyle);
                             }
                             //else
                             {
-                                createCell(xlsxRow, cellI, CellType.String, convertHelper.cellValueHelper(Int32.Parse(map["title"].ToString()),key, map[key].ToString()), currentStyle);
+                                createCell(xlsxRow, cellI, CellType.String, convertHelper.CellValueHelper(Int32.Parse(map["title"].ToString()),key, map[key].ToString()), currentStyle);
                             }
                             cellI++;
                         }

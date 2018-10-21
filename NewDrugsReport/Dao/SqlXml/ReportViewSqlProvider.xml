@@ -481,7 +481,18 @@
     </select>
     <select id="spcRewardList" desc="獎勵推薦資料">
         <![CDATA[
-            select ROW_NUMBER() OVER(order by C.USER_ID) ROW_NO, D.SCHOOL, C.MBR_TYPE, E.SOLDIER_ID, E.SOLDIER_TYPE, E.SOLDIER_RANK, E.TITLE,
+            select ROW_NUMBER() OVER(order by C.USER_ID) ROW_NO, D.SCHOOL, "MBR_TYPE" =
+			      CASE 
+			      WHEN C.MBR_TYPE = 1 THEN '個案管理人'
+			      WHEN C.MBR_TYPE = 2 THEN '生教(輔)組長'
+			      WHEN C.MBR_TYPE = 3 THEN '輔導教師'
+			      WHEN C.MBR_TYPE = 4 THEN '輔導教官'
+			      WHEN C.MBR_TYPE = 5 THEN '班級導師'
+			      WHEN C.MBR_TYPE = 6 THEN '其他'
+			      WHEN C.MBR_TYPE = 10 THEN '輔導老師(校安)'
+			      ELSE '?'
+			      END, 
+            E.SOLDIER_ID, E.SOLDIER_TYPE, E.SOLDIER_RANK, E.TITLE,
             E.ACCOUNT_NAME, C.NOTICE_SNO, C.STU_NAME, C.EDU_LEVEL from TB_USER_DATA D, TB_USER_ACCOUNT E, 
             (select A.USER_ID, A.USER_ACCOUNT, A.NOTICE_SNO, A.MBR_TYPE, B.STU_NAME, B.STU_ID_NO, B.EDU_LEVEL from TB_CH_GROUP A, TB_STU_BASIC_DATA B where A.NOTICE_SNO = B.NOTICE_SNO
             AND A.NOTICE_SNO in (select TB_MEETING_INFO.NOTICE_SNO
@@ -501,7 +512,8 @@
     </select>
     <select id="spcItemList" desc="個案推薦表">
         <![CDATA[
-              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect,F.MBR_TYPE, G.SCHOOL, H.ACCOUNT_NAME, H.TITLE, I.MEETING_TIME as CLS_MEETING_TIME
+              select A.*,B.count_complet,C.count_inspect,D.cont_count_complet,E.cont_count_inspect, F.MBR_TYPE
+			        , G.SCHOOL, H.ACCOUNT_NAME, H.TITLE, I.MEETING_TIME as CLS_MEETING_TIME
               , I.INSPECT_REPORT , I.IS_INVITE as CLS_IS_INVITE , J.CONT_COUNSELING_REASON, K.EVENT_REPORT_TIME from
               (select NOTICE_SNO, MEETING_TYPE, MEETING_TIME as ACT_MEETING_TIME, SETUP_REASON,MEETING_RECORD, IS_INVITE as ACT_IS_INVITE from TB_MEETING_INFO where MEETING_TYPE = 'ACT') A
               left join

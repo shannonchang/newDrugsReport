@@ -204,6 +204,11 @@ namespace NewDrugs.Service
                     dbConn.Open();
                     dao.dbConn = dbConn;
                     list = dao.QryCityRewardsList(beginYear, beginMonth, endYear, endMonth, loginType, userId);
+                    foreach (var item in list)
+                    {
+                        if(item.TITLE!=null)
+                            item.TITLE = convertHelper.TitleHelper(item.TITLE);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -226,6 +231,11 @@ namespace NewDrugs.Service
                     dbConn.Open();
                     dao.dbConn = dbConn;
                     list = dao.QryRewardsList(beginYear, beginMonth, endYear, endMonth, loginType, userId);
+                    foreach(var item in list)
+                    {
+                        if (item.TITLE != null)
+                            item.TITLE = convertHelper.TitleHelper(item.TITLE);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -277,23 +287,23 @@ namespace NewDrugs.Service
                         bean.noticeSno = noticeSnoString + '\n' + "("+eventReportTimeString+")" ;
                         bean.actMeetingTime = item.ACT_MEETING_TIME != null ? convertHelper.timeHelper(item.ACT_MEETING_TIME) : "";
                         
-                        bean.actIsInvite = item.ACT_IS_INVITE!=null?convertHelper.isInviteHelper(item.ACT_IS_INVITE):"";
+                        bean.actIsInvite = item.ACT_IS_INVITE!=null?convertHelper.IsInviteHelper(item.ACT_IS_INVITE):"";
                         bean.actIsAttend = "";//使用者自填
                         bean.conselingRecord = "";//使用者自填
-                        bean.contConselingReason = item.CONT_COUNSELING_REASON!=null?convertHelper.contCounselingReasonHelper(item.CONT_COUNSELING_REASON):"";
+                        bean.contConselingReason = item.CONT_COUNSELING_REASON!=null?convertHelper.ContCounselingReasonHelper(item.CONT_COUNSELING_REASON):"";
                         bean.contCounselingCount = item.cont_count_complet>0? item.cont_count_complet:0;
                         bean.contIsInspect = item.cont_count_inspect > 0 ? item.cont_count_inspect : 0;
                         bean.counselingCount = item.count_complet > 0 ? item.count_complet : 0;
                         bean.endIsAttend = "";//使用者自填
-                        bean.endIsInvite = item.CLS_IS_INVITE!=null?convertHelper.isInviteHelper(item.CLS_IS_INVITE):"";
+                        bean.endIsInvite = item.CLS_IS_INVITE!=null?convertHelper.IsInviteHelper(item.CLS_IS_INVITE):"";
                         bean.endMeetingTime = item.CLS_MEETING_TIME != null ? convertHelper.timeHelper(item.CLS_MEETING_TIME) : "";
                         
-                        bean.inspectReport = item.INSPECT_REPORT!=null?convertHelper.inspectRecordHelper(item.INSPECT_REPORT):"";
+                        bean.inspectReport = item.INSPECT_REPORT!=null?convertHelper.InspectRecordHelper(item.INSPECT_REPORT):"";
                         bean.isInspect = item.count_inspect > 0 ? item.count_inspect : 0;
-                        bean.meeingRecord = item.MEETING_RECORD!=null?convertHelper.recordHelper(item.MEETING_RECORD):"";
+                        bean.meeingRecord = item.MEETING_RECORD!=null?convertHelper.RecordHelper(item.MEETING_RECORD):"";
                         //bean.noticeSno = item.NOTICE_SNO;
                         bean.school = item.SCHOOL;
-                        bean.setupReason = item.SETUP_REASON!=null?convertHelper.setupReasonHelper(item.SETUP_REASON):"";
+                        bean.setupReason = item.SETUP_REASON!=null?convertHelper.SetupReasonHelper(item.SETUP_REASON):"";
                         bean.status = item.STATUS;
                         bean.title = item.MBR_TYPE;
                        

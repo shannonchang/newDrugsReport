@@ -43,7 +43,7 @@ namespace NewDrugs.Helper
                 case "10":
                     return "輔導老師(校安)";
                 default:
-                    return "?";
+                    return "未填";
             }
 
 
@@ -64,6 +64,8 @@ namespace NewDrugs.Helper
                     return 3;
                 case 3:
                     return 4;
+                case 10:
+                    return 5;
                 default:
                     return 0;
             }
@@ -93,6 +95,11 @@ namespace NewDrugs.Helper
                     else
                         return sampleStyle;
                 case 3:
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                        return slashStyle;
+                    else
+                        return sampleStyle;
+                case 10:
                     if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return slashStyle;
                     else
@@ -135,6 +142,13 @@ namespace NewDrugs.Helper
                         return MbrHelper(value);
                     else
                         return value;
+                case 10:
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                        return "";
+                    else if (key.Equals("title"))
+                        return MbrHelper(value);
+                    else
+                        return value;
                 default:
                     return value;
             }
@@ -153,9 +167,9 @@ namespace NewDrugs.Helper
                 case 4:
                     return "其他網絡通知涉及違反毒品危害防制條例";
                 case 0:
-                    return "?";
+                    return "未填";
                 default:
-                    return "?";
+                    return "未填";
             }
         }
 
@@ -195,7 +209,7 @@ namespace NewDrugs.Helper
                 case 2:
                     return "因個案學生輔到週數未達12週";
                 default:
-                    return "?";
+                    return "未填";
 
             }
         }

@@ -253,7 +253,8 @@ namespace NewDrugs.Service
             List<dynamic> list = new List<dynamic>();
             List<dynamic> snoPeoplelist = new List<dynamic>();
             List<SpcItem> dataList = new List<SpcItem>();
-            int[] mbrList = { 1, 4, 5, 3 };
+            int[] mbrList = { 1, 4, 5, 3 ,10};//1=個案管理人,4 = 輔導教官,5 = 班級導師,3 = 輔導教師,10 = 輔導老師(校安)
+
             Hashtable spcHash = new Hashtable();
             Hashtable spcItemHash = new Hashtable();
             Hashtable spcPeopleHash = new Hashtable();
@@ -359,7 +360,7 @@ namespace NewDrugs.Service
                             bean.endIsInvite = item.CLS_IS_INVITE != null ? convertHelper.IsInviteHelper(item.CLS_IS_INVITE) : "";
                             bean.endMeetingTime = item.CLS_MEETING_TIME != null ? convertHelper.timeHelper(item.CLS_MEETING_TIME) : "";
 
-                            bean.inspectReport = item.INSPECT_REPORT != null ? convertHelper.InspectRecordHelper(item.INSPECT_REPORT) : "";
+                            bean.inspectReport = item.CLS_MEETING_RECORD != null ? convertHelper.InspectRecordHelper(item.CLS_MEETING_RECORD) : "";
                             bean.isInspect = item.count_inspect > 0 ? item.count_inspect : 0;
                             bean.meeingRecord = item.MEETING_RECORD != null ? convertHelper.RecordHelper(item.MEETING_RECORD) : "";
                             

@@ -334,12 +334,12 @@ namespace NewDrugsReport.Controllers
         private void generatorSpcItemXlsx(ISheet sheet, ICellStyle sampleStyle, ICellStyle slashStyle, string reportName, int rowI, List<SpcItem> dataList)
         {
             MemoryStream ms = new MemoryStream();
-            int currentRow = 0;//同一NOTICE_SNO的一組
+            int noticeSnoRows = 5;//同一NOTICE_SNO的一組, 共5行
             int totalRow = dataList!=null&&dataList.Count>0?dataList[dataList.Count() - 1].rowNum:0;
             
             try
             {
-                for (int i = rowI; i < totalRow * 4 + rowI; i++)
+                for (int i = rowI; i < totalRow * noticeSnoRows + rowI; i++)
                 {
                     //if (rowI > 22)//第五筆後自行增加列
                     {
@@ -364,7 +364,7 @@ namespace NewDrugsReport.Controllers
                     int cellI = 0;
                     if (map["rowNum"] != null&&map["title"]!=null&&convertHelper.MbrRowNum(Int32.Parse(map["title"].ToString()))!=0)
                     {
-                        xlsxRow = sheet.GetRow((Int32.Parse(map["rowNum"].ToString()) - 1) * 4 + convertHelper.MbrRowNum(Int32.Parse(map["title"].ToString()))+rowI-1);//rowNum*4+mbrType列數+起始列數-1(由零起算)
+                        xlsxRow = sheet.GetRow((Int32.Parse(map["rowNum"].ToString()) - 1) * noticeSnoRows + convertHelper.MbrRowNum(Int32.Parse(map["title"].ToString()))+rowI-1);//rowNum*4+mbrType列數+起始列數-1(由零起算)
                         foreach (string key in map.Keys.ToList())
                         {
                             if (map[key] is null)//20181011 Frank避免null exception
@@ -389,8 +389,8 @@ namespace NewDrugsReport.Controllers
                 //處理row_num, notice_sno, meeting time合併儲存格
                 for(int i =0; i<totalRow; i++)
                 {
-                    int begin = i * 4 + rowI;
-                    int end = i * 4 + rowI + 3;
+                    int begin = i * noticeSnoRows + rowI;
+                    int end = i * noticeSnoRows + rowI + (noticeSnoRows -1);//從begin起算noticeSnoRows-1行=end
                     sheet.AddMergedRegion(new CellRangeAddress(begin, end, 0, 0));//row num
                     sheet.AddMergedRegion(new CellRangeAddress(begin, end, 1, 1));//school
                     sheet.AddMergedRegion(new CellRangeAddress(begin, end, 2, 2));//notice sno

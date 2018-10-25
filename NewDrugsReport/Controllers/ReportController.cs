@@ -272,7 +272,6 @@ namespace NewDrugsReport.Controllers
                         ICellStyle sampleStyle = xlsx.CreateCellStyle();
                         sampleStyle.BorderDiagonalLineStyle = BorderStyle.Thin;
                         dataList = service.GetCitySpcReward(beginYear, beginMonth, endYear, endMonth, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());//test by Frank
-                        //dataList = service.getPeopleAmountByDrugsLv(beginYear, endYear, loginUserInfo.loginType.ToString(), loginUserInfo.userId.ToString());
                         sampleStyle.BorderTop = BorderStyle.Thin;
                         sampleStyle.BorderBottom = BorderStyle.Thin;
                         sampleStyle.BorderRight = BorderStyle.Thin;
@@ -341,11 +340,8 @@ namespace NewDrugsReport.Controllers
             {
                 for (int i = rowI; i < totalRow * noticeSnoRows + rowI; i++)
                 {
-                    //if (rowI > 22)//第五筆後自行增加列
-                    {
-                        InsertRow(sheet, i);
-
-                    }
+                    InsertRow(sheet, i);
+                    
 
                     IRow newRow = sheet.GetRow(i);
                     if (newRow == null)
@@ -373,17 +369,11 @@ namespace NewDrugsReport.Controllers
                             }
 
                             ICellStyle currentStyle = convertHelper.CellStyleHelper(sampleStyle, slashStyle , Int32.Parse(map["title"].ToString()), key);
-                            //if (this.IsNumber(map[key]))
-                            {
-                                //createCell(xlsxRow, cellI, CellType.Numeric, Int32.Parse(map[key].ToString()), currentStyle);
-                            }
-                            //else
-                            {
-                                createCell(xlsxRow, cellI, CellType.String, convertHelper.CellValueHelper(Int32.Parse(map["title"].ToString()),key, map[key].ToString()), currentStyle);
-                            }
+                            
+                            createCell(xlsxRow, cellI, CellType.String, convertHelper.CellValueHelper(Int32.Parse(map["title"].ToString()),key, map[key].ToString()), currentStyle);
+                            
                             cellI++;
                         }
-                        //rowI++;
                     }
                 }
                 //處理row_num, notice_sno, meeting time合併儲存格

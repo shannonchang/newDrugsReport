@@ -306,16 +306,8 @@ namespace NewDrugs.Service
                     foreach (int noticeSno in spcItemHash.Keys)
                     {
                         
-                        //if(noticeSno != null)//計算rowNum,有新的sno就加一
-                        {
-                            //if (!spcHash.ContainsKey(noticeSno))
-                            {
-                             //   spcHash.Add(noticeSno, 1);
-                                rowNum++;
-                            }
-                                
-                        }
-
+                        rowNum++;
+                        
                         //依照mbrList 建立mbrType對應的審查表
                         foreach(int mbrItem in mbrList)
                         {
@@ -334,7 +326,6 @@ namespace NewDrugs.Service
                             }
                             
                             dynamic item = spcItemHash[noticeSno];
-                            //int noticeSno = item.NOTICE_SNO ;
                             bean.title = mbrItem;
                             string noticeSnoString = Convert.ToString(noticeSno);
                             DateTime? eventReportTime = item.EVENT_REPORT_TIME;

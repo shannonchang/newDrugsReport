@@ -72,7 +72,7 @@ namespace NewDrugs.Helper
         }
 
         /*
-         * 
+         * 制造斜線空格
          */
         public static ICellStyle CellStyleHelper(ICellStyle sampleStyle, ICellStyle slashStyle, int mbrType, string key)
         {
@@ -109,6 +109,9 @@ namespace NewDrugs.Helper
             }
         }
 
+        /*
+         * 有斜線空格則不寫字
+         */
         public static string CellValueHelper( int mbrType, string key, string value)
         {
 

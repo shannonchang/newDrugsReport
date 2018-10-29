@@ -302,8 +302,16 @@ namespace NewDrugs.Service
                         }
                     }
 
-                    //依照notice sno建立學校人員及審查表對應
+                    //notice sno 排序
+                    List<int> spcItemSnoList = new List<int>();
                     foreach (int noticeSno in spcItemHash.Keys)
+                    {
+                        spcItemSnoList.Add(noticeSno);
+                    }
+                    spcItemSnoList.Sort();
+
+                    //依照notice sno建立學校人員及審查表對應
+                    foreach (int noticeSno in spcItemSnoList)
                     {
                         
                         rowNum++;

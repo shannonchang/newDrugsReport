@@ -198,29 +198,7 @@ namespace NewDrugs.Service
             }
             return mbrTypeHashtable;
         }
-
-        /*20181011 Frank
-        查詢審查表
-             */
-        public List<dynamic> GetMeetingNote()
-        {
-            List<dynamic> list = new List<dynamic>();
-            using (SqlConnection dbConn = new SqlConnection(DbConnection.connString))
-            {
-                try
-                {
-                    dbConn.Open();
-                    dao.dbConn = dbConn;
-                    list = dao.GetTbCHGroupsList();
-                }
-                catch (Exception e)
-                {
-                    logger.Error(e, e.Message);
-                }
-            }
-            return list;
-        }
-
+        
         /*20181011 Frank
         查詢各縣市獎勵推薦
              */

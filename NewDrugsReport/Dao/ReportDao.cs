@@ -416,14 +416,6 @@ namespace NewDrugs.Dao
             return resultList;
         }
 
-        public List<dynamic> GetTbCHGroupsList()
-        {
-            string sql = "select * from TB_CH_GROUP";
-            List<dynamic> list = new List<dynamic>();
-            list = QueryTableListBySql(sql);
-            return list;
-        }
-
         /*
          * 建立mbr type對應表
          */

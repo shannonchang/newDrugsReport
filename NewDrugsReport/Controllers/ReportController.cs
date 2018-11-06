@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using CityinfoCommon;
 using NewDrugs.Base;
@@ -14,7 +13,6 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using NewDrugs.Helper;
 using NPOI.SS.Util;
-using System.Collections;
 
 namespace NewDrugsReport.Controllers
 {

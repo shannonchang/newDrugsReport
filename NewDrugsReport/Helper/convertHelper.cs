@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Globalization;
+using System.Collections;
+using NewDrugs.Service;
 
 namespace NewDrugs.Helper
 {
     public static class convertHelper
     {
+        private static ReportService service = new ReportService();
         public static string TitleHelper(string title)
         {
             string[] titleList = title.Split(',');
@@ -26,7 +29,7 @@ namespace NewDrugs.Helper
 
         public static string MbrHelper(string mbrType)
         {
-            switch (mbrType)
+            /*switch (mbrType)
             {
                 case "1":
                     return "個案管理人";
@@ -44,9 +47,11 @@ namespace NewDrugs.Helper
                     return "輔導老師(校安)";
                 default:
                     return "未填";
-            }
-
-
+            }*/
+            Hashtable mbrTypeHashtable = service.GetMbrTypeHashtable();
+            if (mbrTypeHashtable[mbrType] != null)
+                return mbrTypeHashtable[mbrType].ToString() ;
+            else return "未填";
         }
 
         /*
@@ -222,6 +227,12 @@ namespace NewDrugs.Helper
             TaiwanCalendar twC = new TaiwanCalendar();
             return twC.GetYear(tDate) +
                             "." + twC.GetMonth(tDate) + "." + twC.GetDayOfMonth(tDate);
+        }
+
+        public static bool IsNumeric(string input)
+        {
+            int test;
+            return int.TryParse(input, out test);
         }
     }
 }

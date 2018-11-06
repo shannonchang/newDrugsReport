@@ -483,20 +483,16 @@
         <![CDATA[
             select ROW_NUMBER() OVER(order by C.USER_ID) ROW_NO, D.SCHOOL, "MBR_TYPE" =
 			      CASE 
-			      WHEN C.MBR_TYPE = 1 THEN '個案管理人'
-			      WHEN C.MBR_TYPE = 2 THEN '生教(輔)組長'
-			      WHEN C.MBR_TYPE = 3 THEN '輔導教師'
-			      WHEN C.MBR_TYPE = 4 THEN '輔導教官'
-			      WHEN C.MBR_TYPE = 5 THEN '班級導師'
-			      WHEN C.MBR_TYPE = 6 THEN '其他'
-			      WHEN C.MBR_TYPE = 10 THEN '輔導老師(校安)'
+			      WHEN F.COMM_VALUE is not null THEN F.COMM_VALUE
 			      ELSE '未填'
-			      END, 
+			      END,  
             E.SOLDIER_ID, E.SOLDIER_TYPE, E.SOLDIER_RANK, E.TITLE,
             E.ACCOUNT_NAME, C.NOTICE_SNO, C.STU_NAME, C.EDU_LEVEL from TB_USER_DATA D, TB_USER_ACCOUNT E, 
             (select A.USER_ID, A.USER_ACCOUNT, A.NOTICE_SNO, A.MBR_TYPE, B.STU_NAME, B.STU_ID_NO, B.EDU_LEVEL from TB_CH_GROUP A, TB_STU_BASIC_DATA B where A.NOTICE_SNO = B.NOTICE_SNO
             AND A.NOTICE_SNO in (select TB_MEETING_INFO.NOTICE_SNO
-            from TB_MEETING_INFO where TB_MEETING_INFO.COUNSELING_RESULT = 1 ))C,
+            from TB_MEETING_INFO where TB_MEETING_INFO.COUNSELING_RESULT = 1 ))C
+			      left join
+			      (select COMM_VALUE,COMM_CODE from TB_COMMON_CODE where COMM_TYPE = 'MBRTP')F on CONVERT(INT, F.COMM_CODE)  = C.MBR_TYPE,
             (select * from TB_DRUGS_NOTICE where YEAR(TB_DRUGS_NOTICE.EVENT_REPORT_TIME) >= @beginYear AND MONTH(TB_DRUGS_NOTICE.EVENT_REPORT_TIME) >= @beginMonth 
             AND YEAR(TB_DRUGS_NOTICE.EVENT_REPORT_TIME) <= @endYear AND MONTH(TB_DRUGS_NOTICE.EVENT_REPORT_TIME) <= @endMonth) K 
             where D.USER_ID = C.USER_ID and E.ACCOUNT = C.USER_ACCOUNT 

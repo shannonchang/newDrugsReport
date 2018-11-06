@@ -169,6 +169,36 @@ namespace NewDrugs.Service
             return list;
         }
 
+        /*20181106 Frank
+         * 建立mbr type對應表
+         */
+        public Hashtable GetMbrTypeHashtable()
+        {
+            Hashtable mbrTypeHashtable = new Hashtable();
+            List<dynamic> list = new List<dynamic>();
+            using (SqlConnection dbConn = new SqlConnection(DbConnection.connString))
+            {
+                try
+                {
+                    dbConn.Open();
+                    dao.dbConn = dbConn;
+                    list = dao.GetMbrTypeCommonValue();
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e, e.Message);
+                }
+            }
+            foreach(var item in list)
+            {
+                if(item.COMM_CODE!=null && convertHelper.IsNumeric(item.COMM_CODE) && (mbrTypeHashtable[item.COMM_CODE] is null))
+                {
+                    mbrTypeHashtable.Add(item.COMM_CODE, item.COMM_VALUE);
+                }
+            }
+            return mbrTypeHashtable;
+        }
+
         /*20181011 Frank
         查詢審查表
              */

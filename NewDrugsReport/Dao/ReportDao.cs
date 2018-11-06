@@ -424,6 +424,17 @@ namespace NewDrugs.Dao
             return list;
         }
 
+        /*
+         * 建立mbr type對應表
+         */
+        public List<dynamic> GetMbrTypeCommonValue()
+        {
+            string sql = "select COMM_VALUE,COMM_CODE from TB_COMMON_CODE where COMM_TYPE = 'MBRTP'";
+            List<dynamic> list = new List<dynamic>();
+            list = QueryTableListBySql(sql);
+            return list;
+        }
+
         /*20181011 Frank
          * 縣市薦報表
          */

@@ -333,7 +333,10 @@ namespace NewDrugs.Service
                                 dynamic spcPeopleItem = spcPeopleHash[noticeSno.ToString() + mbrItem.ToString()];
                                 bean.accountName = spcPeopleItem.ACCOUNT_NAME;
                                 bean.school = spcPeopleItem.SCHOOL;
-                                
+                                bean.contCounselingCount = spcPeopleItem.cont_count_complet > 0 ? spcPeopleItem.cont_count_complet : 0;
+                                bean.contIsInspect = spcPeopleItem.cont_count_inspect > 0 ? spcPeopleItem.cont_count_inspect : 0;
+                                bean.counselingCount = spcPeopleItem.count_complet > 0 ? spcPeopleItem.count_complet : 0;
+                                bean.isInspect = spcPeopleItem.count_inspect > 0 ? spcPeopleItem.count_inspect : 0;
                             }
                             else
                             {
@@ -344,6 +347,7 @@ namespace NewDrugs.Service
                             dynamic item = spcItemHash[noticeSno];
                             bean.title = mbrItem;
                             string noticeSnoString = Convert.ToString(noticeSno);
+                            string idnString = Convert.ToString(item.IDN);//校安序號
                             DateTime? eventReportTime = item.EVENT_REPORT_TIME;
                             string eventReportTimeString = "";
                             if (item.EVENT_REPORT_TIME != null)
@@ -353,22 +357,22 @@ namespace NewDrugs.Service
 
                             bean.rowNum = rowNum;
                             
-                            bean.noticeSno = noticeSnoString + '\n' + "(" + eventReportTimeString + ")";
+                            bean.noticeSno = idnString + '\n' + "(" + eventReportTimeString + ")";
                             bean.actMeetingTime = item.ACT_MEETING_TIME != null ? convertHelper.timeHelper(item.ACT_MEETING_TIME) : "";
 
                             bean.actIsInvite = item.ACT_IS_INVITE != null ? convertHelper.IsInviteHelper(item.ACT_IS_INVITE) : "";
                             bean.actIsAttend = "";//使用者自填
                             bean.conselingRecord = "";//使用者自填
                             bean.contConselingReason = item.CONT_COUNSELING_REASON != null ? convertHelper.ContCounselingReasonHelper(item.CONT_COUNSELING_REASON) : "";
-                            bean.contCounselingCount = item.cont_count_complet > 0 ? item.cont_count_complet : 0;
-                            bean.contIsInspect = item.cont_count_inspect > 0 ? item.cont_count_inspect : 0;
-                            bean.counselingCount = item.count_complet > 0 ? item.count_complet : 0;
+                            //bean.contCounselingCount = item.cont_count_complet > 0 ? item.cont_count_complet : 0;
+                            //bean.contIsInspect = item.cont_count_inspect > 0 ? item.cont_count_inspect : 0;
+                            //bean.counselingCount = item.count_complet > 0 ? item.count_complet : 0;
                             bean.endIsAttend = "";//使用者自填
                             bean.endIsInvite = item.CLS_IS_INVITE != null ? convertHelper.IsInviteHelper(item.CLS_IS_INVITE) : "";
                             bean.endMeetingTime = item.CLS_MEETING_TIME != null ? convertHelper.timeHelper(item.CLS_MEETING_TIME) : "";
 
                             bean.inspectReport = item.CLS_MEETING_RECORD != null ? convertHelper.InspectRecordHelper(item.CLS_MEETING_RECORD) : "";
-                            bean.isInspect = item.count_inspect > 0 ? item.count_inspect : 0;
+                            //bean.isInspect = item.count_inspect > 0 ? item.count_inspect : 0;
                             bean.meeingRecord = item.MEETING_RECORD != null ? convertHelper.RecordHelper(item.MEETING_RECORD) : "";
                             
                             bean.setupReason = item.SETUP_REASON != null ? convertHelper.SetupReasonHelper(item.SETUP_REASON) : "";

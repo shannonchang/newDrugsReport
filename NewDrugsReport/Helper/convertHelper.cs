@@ -105,7 +105,7 @@ namespace NewDrugs.Helper
                     else
                         return sampleStyle;
                 case 10:
-                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord")  || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return slashStyle;
                     else
                         return sampleStyle;
@@ -151,7 +151,7 @@ namespace NewDrugs.Helper
                     else
                         return value;
                 case 10:
-                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord") || key.Equals("isInspect") || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
+                    if (key.Equals("actIsInvite") || key.Equals("meeingRecord")  || key.Equals("inspectReport") || key.Equals("endMeetingTime") || key.Equals("endIsInvite"))
                         return "";
                     else if (key.Equals("title"))
                         return MbrHelper(value);
